@@ -1,0 +1,122 @@
+ /* General Styles */
+ body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to right, #4e54c8, #8f94fb);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .container {
+    background: #fff;
+    padding: 40px 50px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .container img {
+    width: 100px;
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .container h2 {
+    margin-bottom: 30px;
+    font-size: 2em;
+    color: #333;
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 30px;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 15px 0px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    background: #f9f9f9;
+    transition: border-color 0.3s;
+  }
+
+  .input-group input:focus {
+    border-color: #4e54c8;
+  }
+
+  .input-group label {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    font-size: 0.9em;
+    color: #aaa;
+    pointer-events: none;
+    transition: 0.3s;
+  }
+
+  .input-group input:focus + label,
+  .input-group input:not(:placeholder-shown) + label {
+    top: -12px;
+    left: 20px;
+    font-size: 0.9em;
+    color: #4e54c8;
+  }
+
+  .options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    font-size: 0.9em;
+    color: #555;
+  }
+
+  .options a {
+    text-decoration: none;
+    color: #4e54c8;
+    transition: color 0.3s;
+  }
+
+  .options a:hover {
+    color: #333;
+  }
+
+  button {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 1.1em;
+    background: #4e54c8;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background: #3c42b3;
+  }
+
+  .register {
+    margin-top: 30px;
+    font-size: 0.9em;
+    color: #555;
+  }
+
+  .register a {
+    text-decoration: none;
+    color: #4e54c8;
+  }
+
+  .register a:hover {
+    text-decoration: underline;
+  }
