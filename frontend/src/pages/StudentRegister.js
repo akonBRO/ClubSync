@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './StudentRegister.css';
+import styles from './StudentRegister.module.css';
+
 
 function StudentRegister() {
   const [formData, setFormData] = useState({
@@ -28,31 +29,54 @@ function StudentRegister() {
   };
 
   return (
-    <div className="container">
-      <header>User Registration</header>
-      <form onSubmit={handleSubmit}>
-        <div className="form first">
-          <div className="details personal">
-            <span className="title">Personal Details</span>
-            <div className="fields">
-              <div className="input-field"><label>Full Name</label><input type="text" name="uname" onChange={handleChange} required /></div>
-              <div className="input-field"><label>Date of Birth</label><input type="date" name="dob" onChange={handleChange} required /></div>
-              <div className="input-field"><label>Email</label><input type="email" name="umail" onChange={handleChange} required /></div>
-              <div className="input-field"><label>Student ID</label><input type="number" name="uid" onChange={handleChange} required /></div>
-              <div className="input-field"><label>Mobile Number</label><input type="number" name="umobile" onChange={handleChange} required /></div>
-              <div className="input-field"><label>Gender</label>
-                <select name="ugender" onChange={handleChange} required>
-                  <option disabled selected value="">Select gender</option>
-                  <option>Male</option><option>Female</option><option>Others</option>
-                </select>
+    <div className={styles.studentRegisterBody}>
+      <div className={styles.studentRegisterContainer}>
+        <header className={styles.studentRegisterContainer__header}>User Registration</header>
+        <form onSubmit={handleSubmit}>
+          <div className="form first"> {/* Consider styling this div if needed */}
+            <div className="details personal"> {/* Consider styling this div if needed */}
+              <span className={styles.studentRegisterForm__title}>Personal Details</span>
+              <div className={styles.studentRegisterForm__fields}>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Full Name</label>
+                  <input type="text" name="uname" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__input} required />
+                </div>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Date of Birth</label>
+                  <input type="date" name="dob" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__input} required />
+                </div>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Email</label>
+                  <input type="email" name="umail" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__input} required />
+                </div>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Student ID</label>
+                  <input type="number" name="uid" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__input} required />
+                </div>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Mobile Number</label>
+                  <input type="number" name="umobile" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__input} required />
+                </div>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Gender</label>
+                  <select name="ugender" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__select} required>
+                    <option disabled selected value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+                <div className={styles.studentRegisterForm__fields__inputField}>
+                  <label className={styles.studentRegisterForm__fields__inputField__label}>Password</label>
+                  <input type="password" name="upassword" onChange={handleChange} className={styles.studentRegisterForm__fields__inputField__input} required />
+                </div>
               </div>
-              <div className="input-field"><label>Password</label><input type="password" name="upassword" onChange={handleChange} required /></div>
             </div>
+            <button className={styles.studentRegisterForm__submitButton} type="submit"><span className="btnText">Submit</span></button> {/* 'btnText' was not in your CSS, consider adding if needed */}
+            <p>Back to <a href="/student-login" className={styles.studentRegister__loginLink}>Login</a></p>
           </div>
-          <button className="submit" type="submit"><span className="btnText">Submit</span></button>
-          <p>Back to <a href="/student-login">Login</a></p>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

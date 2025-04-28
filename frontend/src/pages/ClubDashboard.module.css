@@ -1,0 +1,107 @@
+.dashboardContainer {
+  display: grid;
+  grid-template-columns: 200px 1fr; /* Left sidebar width and main content */
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.sidebar {
+  background-color: #f4f6f8;
+  padding: 20px;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.menuItem {
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #333;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+.menuItem:hover {
+  background-color: #e0e0e0;
+}
+
+.activeMenuItem {
+  background-color: #007bff;
+  color: white;
+}
+
+.mainContent {
+  padding: 30px;
+  background-color: #fff;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.dashboardHeader h1 {
+  color: #333;
+  font-size: 2em;
+}
+
+.logoutButton {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logoutButton:hover {
+  background-color: #c82333;
+}
+
+.dashboardSection {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboardSection h2 {
+  color: #555;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  font-size: 1.2em;
+  color: #777;
+}
+
+.error {
+  color: #dc3545;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+.clubId {
+  color: #777;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+/* Add more styles as needed */
