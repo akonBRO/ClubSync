@@ -12,32 +12,32 @@ const app = express();
 connectDB();
 
 app.use(cors({
-  origin: 'http://localhost:3000', // Or your frontend's URL
-  credentials: true, // Allow sending cookies across origins
+  credentials: true,
 }));
 app.use(express.json());
 
-// Configure session middleware
 app.use(session({
-  secret: 'key', // Replace with a strong, random secret
+  secret: 'key',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/clubsync-db', // Use your MongoDB connection string
-    collectionName: 'sessions', // Optional: Name of the session collection
-    ttl: 24 * 60 * 60, // Session TTL in seconds (e.g., 24 hours)
+    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/clubsync-db',
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60,
   }),
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // Cookie expiry time (same as TTL) in milliseconds
-    httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
-    sameSite: 'lax', // Help prevent CSRF attacks
-    secure: false, // Only send over HTTPS in production
+    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'lax', // changed
+    secure: false,
+    domain: 'localhost'
   },
 }));
 
+// Correct order
+app.use('/api/clubs', clubAuthRoutes); // Login and dashboard
+app.use('/api/clubs', clubRoutes);     // Other club routes
 app.use('/api/students', studentRoutes);
-app.use('/api/clubs', clubRoutes);
-app.use('/api/clubs', clubAuthRoutes);
 
 console.log("Routes mounted: /api/students");
 

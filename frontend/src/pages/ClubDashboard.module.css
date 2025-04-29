@@ -1,107 +1,324 @@
-.dashboardContainer {
-  display: grid;
-  grid-template-columns: 200px 1fr; /* Left sidebar width and main content */
-  min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
+
+/* Global Styles */
+.dashboardContainerInner {
+  max-width: 1200px; /* Increased max-width */
+  margin: 0 auto; /* Center the content horizontally */
+}
+.header {
+  background-color: #FFFFFF;
+  padding: 20px 30px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
-.sidebar {
-  background-color: #f4f6f8;
+.headerWelcome {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #718096;
+}
+
+.headerUserName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2D3748;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.uploadButton {
+  background-color: #3751FF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uploadButton:hover {
+  background-color: #293ebd;
+}
+
+.searchBar {
+  background-color: #F7FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  color: #A0AEC0;
+  margin-right: 10px;
+}
+
+.searchInput {
+  border: none;
+  background-color: transparent;
+  flex-grow: 1;
+  color: #4A5568;
+  font-size: 1rem;
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.notificationIcon {
+  position: relative;
+  font-size: 1.3rem;
+  color: #A0AEC0;
+  cursor: pointer;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #E53E3E;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dashboard Grid */
+.dashboardGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr; /* Default to one column */
+}
+
+/* On medium screens (min-width: 700px), force two columns */
+@media (min-width: 700px) {
+  .dashboardGrid {
+      grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* On larger screens (min-width: 1000px), force three columns */
+@media (min-width: 1000px) {
+  .dashboardGrid {
+      grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* On very wide screens (min-width: 1300px), force four columns */
+@media (min-width: 1300px) {
+  .dashboardGrid {
+      grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Content Card Styles */
+.dashboardCard {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
   padding: 20px;
-  border-right: 1px solid #e0e0e0;
+}
+
+/* Specific Card Layouts - Adapt as needed */
+.referralCard {
+  background-color: #E9F0FF; /* Light blue background */
+  color: #3751FF;
+  padding: 30px;
+  text-align: center;
+}
+
+.referralCard h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.referralCard p {
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.referralButton {
+  background-color: #3751FF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.referralButton:hover {
+  background-color: #293ebd;
+}
+
+.totalProductCard,
+.totalEarningCard {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
-.sidebar h2 {
-  margin-bottom: 20px;
-  color: #555;
-}
-
-.menuItem {
-  padding: 10px 15px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #333;
-  display: block;
-  transition: background-color 0.3s ease;
-}
-
-.menuItem:hover {
-  background-color: #e0e0e0;
-}
-
-.activeMenuItem {
-  background-color: #007bff;
-  color: white;
-}
-
-.mainContent {
-  padding: 30px;
-  background-color: #fff;
-}
-
-.dashboardHeader {
+.cardHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-}
-
-.dashboardHeader h1 {
-  color: #333;
-  font-size: 2em;
-}
-
-.logoutButton {
-  padding: 10px 20px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.logoutButton:hover {
-  background-color: #c82333;
-}
-
-.dashboardSection {
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.dashboardSection h2 {
-  color: #555;
-  margin-top: 0;
+  gap: 10px;
+  color: #718096;
+  font-size: 0.9rem;
   margin-bottom: 15px;
 }
 
+.cardHeaderIcon {
+  font-size: 1.1rem;
+}
+
+.cardTitle {
+  font-weight: 600;
+}
+
+.cardValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2D3748;
+}
+
+.cardTrend {
+  font-size: 0.8rem;
+  color: #38A169; /* Example positive trend color */
+}
+
+.lastDownloadCard {
+  /* Style for the chart */
+}
+
+.topProductsCard h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2D3748;
+  margin-bottom: 15px;
+}
+
+.topProductItem {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.topProductItem:last-child {
+  border-bottom: none;
+}
+
+.productAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #CBD5E0; /* Placeholder */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 1rem;
+}
+
+.productInfo {
+  flex-grow: 1;
+}
+
+.productName {
+  font-weight: 500;
+  color: #2D3748;
+  font-size: 1rem;
+}
+
+.productCategory {
+  color: #718096;
+  font-size: 0.8rem;
+}
+
+.viewDetailsArrow {
+  color: #A0AEC0;
+  font-size: 1rem;
+}
+
+.balancesCard h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2D3748;
+  margin-bottom: 15px;
+}
+
+.balanceItem {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.balanceLabel {
+  color: #718096;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.balanceValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2D3748;
+}
+
+.withdrawButton {
+  background-color: #3751FF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+  margin-top: 20px;
+}
+
+.withdrawButton:hover {
+  background-color: #293ebd;
+}
+
+/* Loading and Error Styles - Adjust as needed */
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 200px;
-  font-size: 1.2em;
-  color: #777;
+  font-size: 1.2rem;
+  color: #718096;
 }
 
 .error {
-  color: #dc3545;
-  font-weight: bold;
+  color: #E53E3E;
+  font-weight: 600;
   margin-top: 20px;
 }
 
 .clubId {
-  color: #777;
-  font-size: 0.9em;
-  margin-top: 5px;
+  color: #718096;
+  font-size: 0.9rem;
+  margin-top: 8px;
 }
 
-/* Add more styles as needed */

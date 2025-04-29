@@ -16,15 +16,16 @@ const ClubLogin = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ cid, cpassword })
+        body: JSON.stringify({ cid, cpassword }),
+        credentials: 'include'
       });
 
       const data = await res.json();
 
       if (res.ok) {
         alert('Login Successful');
-        console.log('Attempting to navigate to /club-dashboard');
-        navigate('/club-dashboard');
+        console.log('Attempting to navigate to /club/overview');
+        navigate('/club/overview');
       } else {
         alert(data.message);
       }

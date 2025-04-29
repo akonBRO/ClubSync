@@ -1,0 +1,120 @@
+/* src/components/ClubSidebar.module.css */
+.sidebar {
+    background-color: #3751FF; /* Primary blue sidebar */
+    color: #FFFFFF;
+    padding: 30px;
+    border-radius: 12px 0 0 12px; /* Rounded top corners */
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebarLogo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.sidebarLogoIcon {
+    font-size: 1.8rem; /* Example icon size */
+    margin-right: 10px;
+}
+
+.sidebarLogoText {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.sidebarNav {
+    flex-grow: 1;
+}
+
+.adminTools {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.sidebarNavItem {
+    padding: 15px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.sidebarNavItem:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebarNavItemActive {
+    background-color: #FFFFFF;
+    color: #3751FF;
+    font-weight: 600;
+}
+
+.sidebarNavItemIcon {
+    font-size: 1.2rem; /* Example icon size */
+}
+
+.sidebarSupport {
+    background-color: #FFFFFF;
+    color: #3751FF;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.sidebarSupportText {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.sidebarSupportButton {
+    background-color: #3751FF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.sidebarSupportButton:hover {
+    background-color: #293ebd;
+}
+
+/* src/components/ClubSidebar.module.css */
+
+/* ... other sidebar styles ... */
+
+.logoutButtonSidebar {
+    padding: 15px 20px; /* Same padding as menu items */
+    border-radius: 8px; /* Same border-radius as menu items */
+    text-decoration: none;
+    color: #FFFFFF; /* White text for contrast */
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Same gap as menu items */
+    margin-top: 20px; /* Adjust spacing as needed */
+    transition: background-color 0.2s ease-in-out;
+    background-color: #dc2626; /* Red background color */
+    font-weight: 500; /* Adjust font weight if needed */
+    border: none; /* Remove default button border */
+    cursor: pointer;
+}
+
+.logoutButtonSidebar:hover {
+    background-color: #b91c1c; /* Darker red on hover */
+}
+
+.logoutButtonSidebarIcon {
+    font-size: 1.2rem; /* Match other icon sizes */
+}
