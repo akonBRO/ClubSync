@@ -6,9 +6,10 @@ const ClubRegister = () => {
     cname: '',
     caname: '',
     cpname: '',
+    cshortname: '',
     cmail: '',
-    cid: '',
     cmobile: '',
+    cid: '',
     cpassword: ''
   });
 
@@ -70,20 +71,24 @@ const ClubRegister = () => {
                 </div>
 
                 <div className={styles.clubRegisterForm__fields__inputField}>
-                  <label className={styles.clubRegisterForm__fields__inputField__label}>Club Email</label>
-                  <input type="email" name="cmail" value={formData.cmail} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required />
+                  <label className={styles.clubRegisterForm__fields__inputField__label}>Club Short Name</label>
+                  <input type="text" name="cshortname" value={formData.cshortname} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required />
                 </div>
 
                 <div className={styles.clubRegisterForm__fields__inputField}>
-                  <label className={styles.clubRegisterForm__fields__inputField__label}>Club ID</label>
-                  <input type="number" name="cid" value={formData.cid} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required min="10000000" max="99999999" />
+                  <label className={styles.clubRegisterForm__fields__inputField__label}>Club Email</label>
+                  <input type="email" name="cmail" value={formData.cmail} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required />
                 </div>
 
                 <div className={styles.clubRegisterForm__fields__inputField}>
                   <label className={styles.clubRegisterForm__fields__inputField__label}>Mobile Number</label>
                   <input type="number" name="cmobile" value={formData.cmobile} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required />
                 </div>
-
+                
+                <div className={styles.clubRegisterForm__fields__inputField}>
+                  <label className={styles.clubRegisterForm__fields__inputField__label}>Club ID</label>
+                  <input type="number" name="cid" value={formData.cid} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required min="10000000" max="99999999" />
+                </div>
                 <div className={styles.clubRegisterForm__fields__inputField}>
                   <label className={styles.clubRegisterForm__fields__inputField__label}>Choose Password</label>
                   <input type="password" name="cpassword" value={formData.cpassword} onChange={handleChange} className={styles.clubRegisterForm__fields__inputField__input} required />

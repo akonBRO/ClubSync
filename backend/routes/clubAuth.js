@@ -7,7 +7,7 @@ router.post('/login', async (req, res) => {
   const { cid, cpassword } = req.body;
 
   try {
-    const club = await Club.findOne({ cid: parseInt(cid) }); // Assuming CID is Number
+    const club = await Club.findOne({ cid, cpassword }); // Assuming CID is Number
 
     if (club) {
       // Direct password comparison (ONLY if you are NOT using hashing)
@@ -69,5 +69,6 @@ router.get('/dashboard', requireLogin, async (req, res) => {
     res.status(500).json({ message: 'Error fetching dashboard data' });
   }
 });
+
 
 module.exports = router;

@@ -71,7 +71,7 @@ const ClubDashboard = () => {
             <div className={styles.dashboardContainerInner}></div> {/* Changed to main instead of wrapping div */}
             <header className={styles.header}>
                 <div className={styles.headerWelcome}>
-                    Welcome Back, <span className={styles.headerUserName}>{clubInfo?.clubName || 'Lucy Lure'}</span>
+                    Welcome Back, <span className={styles.headerUserName}>{clubInfo?.clubName || 'Club'}</span>
                 </div>
                 <div className={styles.headerActions}>
                     <button className={styles.uploadButton}>
