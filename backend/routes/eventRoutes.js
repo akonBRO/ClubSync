@@ -118,37 +118,66 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// 6. Get events by status
+// GET /api/events/status/:status?search=EID_VALUE
 router.get('/status/:status', async (req, res) => {
   try {
-    const events = await Event.find({ status: req.params.status });
-    res.json(events);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching by status', error: error.message });
-  }
-});
-const deleteEvent = async (req, res) => {
-  const { eventId } = req.params;
-  try {
-      const deletedEvent = await Event.findByIdAndDelete(eventId);
-      if (!deletedEvent) {
-          return res.status(404).json({ message: 'Event not found.' });
-      }
-      res.status(204).send(); // Successful deletion, no content to send back
-  } catch (error) {
-      console.error('Error deleting event:', error); // **CHECK THIS LOG**
-      res.status(500).json({ message: 'Failed to delete event on the server.' });
-  }
-};
+    const { status } = req.params;
+    const { search } = req.query; // Get search term from query params
 
-router.delete('/byBookingId/:bookingId', async (req, res) => {
-try {
-    const deleted = await Event.findOneAndDelete({ booking_id: req.params.bookingId });
-    if (!deleted) return res.status(404).json({ message: 'Event not found' });
-    res.json({ message: 'Event deleted successfully' });
-} catch (error) {
-    res.status(500).json({ message: 'Deletion failed', error: error.message });
-}
+    // Basic validation for status if needed
+    const allowedStatuses = ['Pending', 'Approved', 'Rejected', 'Budget'];
+    if (!allowedStatuses.includes(status)) {
+         return res.status(400).json({ message: 'Invalid status value.' });
+    }
+
+    let query = { status: status }; // Base query
+
+    // If search term exists, add EID filter (case-insensitive)
+    if (search) {
+      // Assuming EID is a string. Use regex for partial matching.
+      query.eid = { $regex: search, $options: 'i' };
+    }
+
+    // Find events matching the query, sort by event_date ascending
+    const events = await Event.find(query).sort({ event_date: 1 }); // 1 for ascending
+
+    res.json(events); // Send back the array of events
+
+  } catch (error) {
+    console.error(`Error fetching events by status=${req.params.status}:`, error);
+    res.status(500).json({ message: 'Error fetching events by status', error: error.message });
+  }
 });
+
+
+// --- DELETE Route (using MongoDB _id) ---
+// DELETE /api/events/:id
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate if ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+         return res.status(400).json({ message: 'Invalid event ID format.' });
+    }
+
+    const deleted = await Event.findByIdAndDelete(id);
+
+    if (!deleted) {
+         return res.status(404).json({ message: 'Event not found with the provided ID.' });
+    }
+
+    // Send success response (no content needed, or a simple message)
+    res.status(200).json({ message: 'Event deleted successfully' });
+    // Or use: res.status(204).send();
+
+  } catch (error) {
+    console.error(`Error deleting event with id=${req.params.id}:`, error);
+    res.status(500).json({ message: 'Deletion failed due to server error.', error: error.message });
+  }
+});
+
+
+module.exports = router;
 
 module.exports = router;

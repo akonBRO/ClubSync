@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FaTrash, FaFileInvoiceDollar, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserGraduate, FaInfoCircle, FaCheckCircle, FaUserFriends } from 'react-icons/fa'; // More icons
+import { FaTrash,FaHashtag, FaFileInvoiceDollar, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserGraduate, FaInfoCircle, FaCheckCircle, FaUserFriends } from 'react-icons/fa'; // More icons
 import './PendingEvents.css';
 
 const PendingEvents = () => {
@@ -76,6 +76,7 @@ const PendingEvents = () => {
                                 <span className="status-tag pending modern"><FaCheckCircle /> {event.status}</span>
                             </div>
                             <div className="event-details-grid modern">
+                            <div className="detail-item modern"><FaHashtag /> {event.eid}</div>
                                 <div className="detail-item modern"><FaCalendarAlt /> {new Date(event.event_date).toLocaleDateString()}</div>
                                 <div className="detail-item modern"><FaClock /> {Array.isArray(event.time_slots) ? event.time_slots.join(', ') : event.time_slot}</div>
                                 <div className="detail-item modern"><FaMapMarkerAlt /> {event.room_number}</div>

@@ -112,6 +112,11 @@ router.post('/:eventId', async (req, res) => { // eventId is Event's MongoDB _id
       });
 
       await budget.save();
+      // Update event status
+
+      event.status = 'Budget';
+
+      await event.save();
       console.log('New budget created successfully.');
 
       // Optionally update event status if needed
