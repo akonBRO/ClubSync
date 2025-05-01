@@ -27,7 +27,7 @@ const PendingEvents = () => {
                     { withCredentials: true }
                 );
 
-                const pending = response.data.filter(event => event.status === 'Pending');
+                const pending = response.data.filter(event => event.status === 'Pending' || event.status === 'Budget' );
                 const sortedEvents = [...pending].sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
                 setPendingEvents(sortedEvents);
                 setLoading(false);
@@ -73,7 +73,7 @@ const PendingEvents = () => {
                             <div className="event-header modern">
                                 <span className="serial-number modern">{index + 1}.</span>
                                 <h3 className="event-name modern">{event.event_name}</h3>
-                                <span className="status-tag pending modern"><FaCheckCircle /> Pending</span>
+                                <span className="status-tag pending modern"><FaCheckCircle /> {event.status}</span>
                             </div>
                             <div className="event-details-grid modern">
                                 <div className="detail-item modern"><FaCalendarAlt /> {new Date(event.event_date).toLocaleDateString()}</div>

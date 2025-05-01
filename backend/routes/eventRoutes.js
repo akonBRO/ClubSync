@@ -3,6 +3,20 @@ const router = express.Router();
 const Event = require('../models/eventModel');
 const { v4: uuidv4 } = require('uuid');
 
+const generateEId = async () => {
+  let eid;
+  let isUnique = false;
+
+  while (!isUnique) {
+    eid = Math.floor(10000000 + Math.random() * 90000000).toString();
+    const existingEvent = await Event.findOne({ eid: eid });
+    if (!existingEvent) {
+      isUnique = true;
+    }
+  }
+  return eid;
+};
+
 // Check if a room slot is available
 const isSlotAvailable = async (eventDate, timeSlotToCheck, roomNumber) => {
     const existingEvent = await Event.findOne({
@@ -32,9 +46,11 @@ router.post('/booking', async (req, res) => {
       if (availabilityResults.some(available => !available)) {
         return res.status(400).json({ message: 'One or more selected slots are not available for this time and room.' });
       }
+      const eid = await generateEId();
   
       const newEvent = new Event({
         booking_id: uuidv4(),
+        eid: eid,
         club_name: club_name || null,
         event_name: event_name || null,
         event_date: event_date ? new Date(event_date) : null,

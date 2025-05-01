@@ -1,56 +1,54 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
+// Budget Item Schema
 const budgetItemSchema = new mongoose.Schema({
+  
   category: {
     type: String,
     enum: ['Food', 'Logistic', 'Transport', 'Other'],
-    required: true,
   },
-  item_name: {
-    type: String,
-    required: true,
-  },
+  item_name: String,
   quantity: {
     type: Number,
-    required: true,
     min: 1,
   },
   unit_price: {
     type: Number,
-    required: true,
     min: 0,
   },
   total_price: {
     type: Number,
-    required: true,
     min: 0,
   },
 });
 
-const budgetSchema = new mongoose.Schema(
-  {
-    event_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Event',
-      required: true,
-    },
-    event_name: {
-      type: String,
-      required: true,
-    },
-    items: [budgetItemSchema],
-    total_budget: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'approved', 'rejected', 'hold'],
-      default: 'pending',
-    },
+// Budget Schema
+const budgetSchema = new mongoose.Schema({
+  booking_id: {
+    type: String,
+    required: true,
+    unique: true,
   },
-  { timestamps: true }
-);
+  event_name: String,
+  items: [budgetItemSchema],
+  total_budget: {
+    type: Number,
+    min: 0,
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'hold'],
+    default: 'pending',
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+}, { timestamps: true });
 
 module.exports = mongoose.model('Budget', budgetSchema);

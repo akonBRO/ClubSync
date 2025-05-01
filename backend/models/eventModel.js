@@ -1,8 +1,11 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
-
+const generateEId = () => {
+  return Math.floor(10000000 + Math.random() * 90000000).toString();
+};
 const eventSchema = new mongoose.Schema({
   booking_id: { type: String, default: () => uuidv4(), required: true, unique: true },
+  eid:{ type: String, default: generateEId, required: true, unique: true },
   club_name: String,
   event_name: String,
   event_date: Date,
