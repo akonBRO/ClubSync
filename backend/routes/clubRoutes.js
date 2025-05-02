@@ -28,6 +28,9 @@ router.post('/register', async (req, res) => {
       cmembers: 0 ,
       cfund:0,            // default 0
       creq: 'No',
+      semester: [],
+      req_id:[],
+      
     });
 
     await newClub.save();

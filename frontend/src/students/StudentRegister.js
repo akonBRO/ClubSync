@@ -73,7 +73,7 @@ function StudentRegister() {
               </div>
             </div>
             <button className={styles.studentRegisterForm__submitButton} type="submit"><span className="btnText">Submit</span></button> {/* 'btnText' was not in your CSS, consider adding if needed */}
-            <p>Back to <a href="/student-login" className={styles.studentRegister__loginLink}>Login</a></p>
+            <p>Back to <a href="/login-student" className={styles.studentRegister__loginLink}>Login</a></p>
           </div>
         </form>
       </div>

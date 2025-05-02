@@ -1,12 +1,16 @@
 import React from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import StudentRegister from './pages/StudentRegister';
+import StudentRegister from './students/StudentRegister';
 import HomePage from './pages/HomePage';
 import ClubRegister from './pages/ClubRegister';
 import ClubLogin from './pages/ClubLogin';
+import StudentLogin from './students/StudentLogin';
 import ClubSidebar from './pages/ClubSidebar';
+import StudentSidebar from './students/StudentSidebar';
 import ClubDashboard from './pages/ClubDashboard';
+import StudentDashboard from './students/StudentDashboard';
+
 import ClubEvents from './pages/ClubEvents';
 import EventBooking from './pages/EventBooking';
 import ApprovedEvents from './pages/ApprovedEvents';
@@ -17,8 +21,10 @@ import ClubMembers from './pages/ClubMembers';
 import ClubProfile from './pages/ClubProfile';
 import ClubSettings from './pages/ClubSettings';
 import BudgetPage from './pages/BudgetPage';
+import RecruitmentEvaluationPage from './pages/RecruitmentEvaluationPage';
 import styles from './App.module.css';
 axios.defaults.withCredentials = true;
+
 
 function App() {
     return (
@@ -26,6 +32,8 @@ function App() {
             <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/register-student" element={<StudentRegister />} />
+                <Route path="/login-student" element={<StudentLogin />} /> {/* Assuming you'll create this */}
+                <Route path="/student/*" element={<StudentLayout />} />
                 <Route path="/register-club" element={<ClubRegister />} />
                 <Route path="/login-club" element={<ClubLogin />} />
                 <Route path="/club/*" element={<ClubLayout />} /> {/* Use a layout component for the dashboard */}
@@ -46,6 +54,7 @@ function ClubLayout() {
                     <Route path="members" element={<ClubMembers />} />
                     <Route path="profile" element={<ClubProfile />} />
                     <Route path="settings" element={<ClubSettings />} />
+                    <Route path="recruitments/evaluate/:semester" element={<RecruitmentEvaluationPage />} />
                 </Routes>
             </div>
         </div>
@@ -62,6 +71,20 @@ function ClubEventsRoutes() {
             <Route path="budget/:eventId" element={<BudgetPage />} />
     
         </Routes>
+    );
+}
+
+function StudentLayout() {
+    return (
+        <div className={styles.dashboardContainer}> {/* Use the same container style */}
+            <StudentSidebar />
+            <div className={styles.mainContentArea}>
+                <Routes>
+                    <Route path="dashboard" element={<StudentDashboard />} />
+                    {/* Add other student-related routes here */}
+                </Routes>
+            </div>
+        </div>
     );
 }
 export default App;

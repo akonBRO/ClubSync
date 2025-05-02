@@ -14,6 +14,7 @@ const eventSchema = new mongoose.Schema({
   event_details: String,
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected', 'Budget'], default: 'Pending' },
   std_reg: String,
+  reg_std:[Number],
   comments: String,
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

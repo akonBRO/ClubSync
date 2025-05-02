@@ -169,3 +169,72 @@
     font-weight: bold;
     font-size: 1.1rem;
 }
+
+/* Add these styles to PendingEvents.css if not already present */
+
+/* Header */
+.approved-events-header.modern { /* Reuse class for consistency */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6; /* Use var(--border-color) if defined */
+  }
+  
+  /* Search Bar */
+  .search-bar.modern { /* Reuse class */
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  
+  .search-icon.modern { /* Reuse class */
+    position: absolute;
+    left: 0.8rem;
+    color: #6c757d; /* Use var(--secondary-color) */
+    pointer-events: none;
+  }
+  
+  .search-input.modern { /* Reuse class */
+    padding: 0.6rem 0.8rem 0.6rem 2.5rem;
+    font-size: 1rem;
+    border: 1px solid #ced4da; /* Use var(--input-border) */
+    border-radius: 0.3rem; /* Use var(--border-radius) */
+    min-width: 250px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  .search-input.modern:focus {
+    border-color: #86b7fe; /* Use var(--input-focus-border) */
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Use var(--input-focus-shadow) */
+  }
+  
+  /* Loading & Alert Styles (Ensure these or similar exist) */
+  .loading-container.modern { /* Reuse class */
+    display: flex; justify-content: center; align-items: center; padding: 3rem;
+    font-size: 1.2rem; font-weight: 500; color: #6c757d; gap: 0.75rem;
+  }
+  .spinner.modern { animation: spin 1.5s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  
+  .alert.modern { /* Base alert class */
+      padding: 1rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid transparent;
+      border-radius: 0.3rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 500;
+  }
+  .alert-error.modern { /* Reuse class */
+       color: #721c24; background-color: #f8d7da; border-color: #f5c6cb;
+  }
+  
+  /* Style for Budget status tag */
+  .status-tag.budget {
+      background-color: #17a2b8; /* Teal for Budget status */
+      color: white;
+  }
+  .status-tag.budget svg {
+      margin-right: 5px;
+  }
+  
+  /* Ensure other styles from previous CSS are present or adjusted */

@@ -17,7 +17,8 @@ router.post("/register", async (req, res) => {
         uid,
         umobile,
         ugender,
-        upassword
+        upassword, 
+        clubs:[],
       });
   
       await newStudent.save();

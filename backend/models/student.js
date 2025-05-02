@@ -7,7 +7,8 @@ const studentSchema = new mongoose.Schema({
   uid: Number,
   umobile: String,
   ugender: String,
-  upassword: String
+  upassword: String,
+  clubs: [String],
 });
 
 module.exports = mongoose.model('Student', studentSchema);

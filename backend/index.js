@@ -7,7 +7,9 @@ const MongoStore = require('connect-mongo');
 const connectDB = require('./database.js');
 const studentRoutes = require('./routes/studentRoute.js');
 const clubRoutes = require('./routes/clubRoutes');
+const recruitmentRoutes = require('./routes/recruitmentRoutes');
 const clubAuthRoutes = require('./routes/clubAuth');
+const studentAuthRoutes = require('./routes/studentAuth');
 const eventRoutes = require('./routes/eventRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 
@@ -41,7 +43,9 @@ app.use(session({
 
 // Correct order
 app.use('/api/clubs', clubAuthRoutes); // Login and dashboard
-app.use('/api/clubs', clubRoutes);     // Other club routes
+app.use('/api/clubs', clubRoutes); 
+app.use('/api/students', studentAuthRoutes);    // Other club routes
+app.use('/api/recruitment', recruitmentRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/events', eventRoutes);  
 app.use('/api/budgets', budgetRoutes);

@@ -57,9 +57,10 @@ router.post('/booking', async (req, res) => {
         time_slots: time_slots, // Save as an array
         room_number: room_number || null,
         std_reg: std_reg || null,
+        reg_std: [],
         event_details: event_details || null,
         status: 'Pending',
-        comments: null,
+        comments: '',
       });
   
       await newEvent.save();
@@ -86,12 +87,31 @@ router.get('/booking/:bookingId', async (req, res) => {
 // 3. Get events by club
 router.get('/club/:clubName', async (req, res) => {
   try {
-    const events = await Event.find({ club_name: req.params.clubName });
-    res.json(events);
+    const { clubName } = req.params;
+    const { search } = req.query; // Get search term
+
+    // Base query: Filter by club name and specific statuses
+    let query = {
+      club_name: clubName,
+      status: { $in: ['Pending', 'Budget'] } // Filter for Pending or Budget status
+    };
+
+    // If search term exists, add EID filter (case-insensitive)
+    if (search) {
+      query.eid = { $regex: search, $options: 'i' };
+    }
+
+    // Find events matching the query, sort by event_date ascending
+    const events = await Event.find(query).sort({ event_date: 1 });
+
+    res.json(events); // Send back the filtered and sorted array
+
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching events', error: error.message });
+    console.error(`Error fetching events for club=${req.params.clubName}:`, error);
+    res.status(500).json({ message: 'Error fetching club events', error: error.message });
   }
 });
+
 
 // 4. Update event
 router.put('/:id', async (req, res) => {
@@ -180,4 +200,4 @@ router.delete('/:id', async (req, res) => {
 
 module.exports = router;
 
-module.exports = router;
+
