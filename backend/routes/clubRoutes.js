@@ -25,11 +25,10 @@ router.post('/register', async (req, res) => {
       cachievement: '',       // default empty
       clogo: '',              // default empty
       csocial: '',            // default empty (or could be '{}')
-      cmembers: 0 ,
+      cmembers: [] ,
       cfund:0,            // default 0
       creq: 'No',
-      semester: [],
-      req_id:[],
+      semester:[],
       
     });
 
@@ -41,5 +40,16 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+router.get('/all', async (req, res) => {
+  try {
+    const clubs = await Club.find();
+    res.status(200).json(clubs);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch clubs' });
+  }
+});
+
 
 module.exports = router;

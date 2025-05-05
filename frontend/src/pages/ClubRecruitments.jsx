@@ -1,305 +1,288 @@
-// src/pages/ClubRecruitments.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
-import './ClubRecruitments.css'; // Import CSS file
+// Import Lucide icons
 import {
-    FaPlay, FaStop, FaUsers, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaSearch, FaInfoCircle, FaSpinner, FaExclamationTriangle
-} from 'react-icons/fa'; // Using react-icons
+  Building,
+  BadgeInfo,
+  CalendarDays,
+  Megaphone,
+  PlayCircle,
+  XCircle,
+  CalendarClock,
+  FileText,
+  Send,
+  ListChecks,
+  StopCircle,
+  Loader,
+  AlertTriangle,
+  Users,
+  UserCheck,
+  UserX,
+  CheckCircle,
+  Info,
+} from 'lucide-react';
+// Import the CSS module
+import styles from './ClubRecruitments.module.css';
 
-// Assume you have a predefined list of possible semesters or fetch them
-const AVAILABLE_SEMESTERS = [
-    "Fall 2025",
-    "Spring 2026",
-    "Fall 2026",
-    "Spring 2027",
-    // Add more as needed
-];
+const ClubRecruitments = () => {
+  const navigate = useNavigate();
+  const [recruitments, setRecruitments] = useState([]);
+  const [deadline, setDeadline] = useState('');
+  const [description, setDescription] = useState('');
+  const [club, setClub] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' }); // For feedback
 
-function ClubRecruitments() {
-    // --- State Variables ---
-    const [clubInfo, setClubInfo] = useState(null); // Basic club info { _id, cname, cid }
-    const [isRecruiting, setIsRecruiting] = useState(false); // Club's overall recruitment status ('Yes'/'No')
-    const [activeSemesters, setActiveSemesters] = useState([]); // Semesters currently open for recruitment
-    const [semesterData, setSemesterData] = useState([]); // Stats per active semester
-    const [selectedSemester, setSelectedSemester] = useState(AVAILABLE_SEMESTERS[0] || ''); // Semester to start recruiting for
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [actionLoading, setActionLoading] = useState(false); // Loading state for start/stop actions
+  // --- Define current semester (Consider making this dynamic) ---
+  // You might fetch this from an API or calculate it based on the current date
+  const currentSemester = 'Spring 2025';
 
-    // --- Hooks ---
-    // !! WARNING: This requires the route path to include :clubId !!
-    const { clubId } = useParams();
-    const navigate = useNavigate();
+  // --- Fetch Club and Recruitment Data ---
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    setStatusMessage({ type: '', text: '' }); // Clear message on refetch
+    try {
+      // Fetch club details first (assuming this endpoint sets credentials/session correctly)
+      const clubRes = await axios.get('http://localhost:3001/api/clubs/dashboard', { withCredentials: true });
+      if (clubRes.data && clubRes.data.clubDetails) {
+        const fetchedClub = clubRes.data.clubDetails;
+        setClub(fetchedClub);
 
-    // --- API Base URL (Configure appropriately) ---
-    const API_URL = 'http://localhost:3001/api/recruitment'; // Adjust based on your server setup
-
-    // --- Fetch Club Recruitment Data ---
-    const fetchClubData = useCallback(async () => {
-        setIsLoading(true);
-        setError(null);
-        // Check if clubId is available before fetching
-        if (!clubId) {
-            setError("Club ID not found in URL. Cannot fetch data.");
-            setIsLoading(false);
-            return;
-        }
-        try {
-            // Corrected: Use GET and the correct API_URL for fetching details
-            const response = await axios.get(`${API_URL}/details/${clubId}`);
-
-            const { club, activeSemesters: fetchedActiveSemesters, semesterData: fetchedSemesterData } = response.data;
-
-            setClubInfo({ // Store only necessary info
-                _id: club._id,
-                cname: club.cname,
-                cid: club.cid,
-            });
-            setIsRecruiting(club.creq === 'Yes');
-            // Ensure activeSemesters is always an array
-            setActiveSemesters(Array.isArray(fetchedActiveSemesters) ? fetchedActiveSemesters : []);
-             // Ensure semesterData is always an array
-            setSemesterData(Array.isArray(fetchedSemesterData) ? fetchedSemesterData : []);
-
-
-        } catch (err) {
-            console.error("Error fetching club recruitment data:", err);
-            setError(err.response?.data?.message || "Failed to load recruitment data. Please try again.");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [clubId, API_URL]); // Dependency: clubId and API_URL
-
-    // --- Initial Data Load ---
-    useEffect(() => {
-        // Initial fetch now includes the check for clubId
-        fetchClubData();
-    }, [fetchClubData]); // Run when fetchClubData changes
-
-    // --- Handle Start Recruitment ---
-    const handleStartRecruitment = async () => {
-        if (!clubId) {
-             setError("Club ID not available. Cannot start recruitment.");
-             return;
-         }
-        if (!selectedSemester) {
-            setError("Please select a semester to start recruitment.");
-            return;
-        }
-        setActionLoading(true);
-        setError(null);
-        try {
-            // Call the refined '/set-recruitment' endpoint using the correct API_URL
-            const response = await axios.post(`${API_URL}/set-recruitment/${clubId}`, {
-                semester: selectedSemester,
-                recruitmentStatus: 'Yes'
-            });
-
-            // Update state based on the response from the backend
-            const { club: updatedClub, semesterData: updatedSemesterData } = response.data;
-            setIsRecruiting(updatedClub.creq === 'Yes');
-            setActiveSemesters(updatedClub.semester || []);
-            setSemesterData(updatedSemesterData || []);
-            // Optionally clear selection or set to next logical semester
-            // setSelectedSemester(AVAILABLE_SEMESTERS[0] || '');
-
-
-        } catch (err) {
-            console.error("Error starting recruitment:", err);
-            setError(err.response?.data?.message || "Failed to start recruitment.");
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    // --- Handle Stop Recruitment ---
-    const handleStopRecruitment = async () => {
-        if (!clubId) {
-             setError("Club ID not available. Cannot stop recruitment.");
-             return;
-         }
-        setActionLoading(true);
-        setError(null);
-        try {
-            // Call the refined '/set-recruitment' endpoint to turn OFF using the correct API_URL
-            const response = await axios.post(`${API_URL}/set-recruitment/${clubId}`, {
-                recruitmentStatus: 'No'
-                // No semester needed when stopping
-            });
-
-            // Update state based on the response
-             const { club: updatedClub, semesterData: updatedSemesterData } = response.data;
-             setIsRecruiting(updatedClub.creq === 'Yes'); // Should be false now
-             setActiveSemesters(updatedClub.semester || []); // Should be empty now
-             setSemesterData(updatedSemesterData || []); // Should reflect no active semesters
-
-
-        } catch (err) {
-            console.error("Error stopping recruitment:", err);
-            setError(err.response?.data?.message || "Failed to stop recruitment.");
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    // --- Handle Navigate to Evaluation Page ---
-    const handleEvaluate = (semester) => {
-        // Navigate to the evaluation route, passing clubId and semester
-        // Assuming the route is /club/:clubId/recruitments/evaluate/:semester
-         if (clubId) {
-             navigate(`/club/${clubId}/recruitments/evaluate/${encodeURIComponent(semester)}`);
-         } else {
-             setError("Club ID not available for navigation.");
-         }
-    };
-
-    // --- Render Logic ---
-    // Handle the case where clubId is missing immediately
-     if (!clubId && !isLoading) {
-         return <div className="error-message"><FaExclamationTriangle /> Club ID is missing from the URL. Please navigate via the Club Dashboard.</div>;
-     }
-
-
-    if (isLoading) {
-        return <div className="loading-container"><FaSpinner className="spinner" /> Loading Recruitment Data...</div>;
+        // Then fetch recruitments for this club
+        const recruitmentRes = await axios.get(`http://localhost:3001/api/recruitment/${fetchedClub._id}`, { withCredentials: true });
+        // Sort recruitments, maybe newest first? (Optional)
+        setRecruitments(recruitmentRes.data.sort((a, b) => b.semester.localeCompare(a.semester))); // Example sort
+      } else {
+        throw new Error("Club details not found.");
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(err.response?.data?.message || err.message || "Failed to load data. Please ensure you are logged in as a club representative.");
+      setClub(null);
+      setRecruitments([]);
+    } finally {
+      setIsLoading(false);
     }
+  }, []); // Empty dependency array means this useCallback memoizes the function itself
 
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Run fetchData on mount and if fetchData changes (which it shouldn't here)
 
-    // Determine which semesters are available to start recruiting for (not already active)
-    const availableSemestersForStarting = AVAILABLE_SEMESTERS.filter(
-        sem => !activeSemesters.includes(sem)
-    );
+  // --- Handle Start Recruitment ---
+  const startRecruitment = async () => {
+    if (!club || !deadline || !description.trim()) {
+      setStatusMessage({ type: 'error', text: 'Please set a deadline and provide a description.' });
+      return;
+    }
+    setStatusMessage({ type: '', text: '' }); // Clear previous message
+    try {
+      const res = await axios.post('http://localhost:3001/api/recruitment/create', {
+        clubId: club._id,
+        clubName: club.cname,
+        semester: currentSemester,
+        application_deadline: deadline,
+        description
+      }, { withCredentials: true });
 
+      setStatusMessage({ type: 'success', text: res.data.message || 'Recruitment started successfully!' });
+      // Add the new recruitment to the top and refetch/update state cleanly
+      setRecruitments(prev => [res.data.recruitment, ...prev.filter(r => r.semester !== currentSemester)]);
+      // Clear form
+      // setDeadline(''); // Keep deadline maybe?
+      // setDescription('');
+    } catch (err) {
+      console.error("Error starting recruitment:", err);
+      setStatusMessage({ type: 'error', text: err.response?.data?.message || 'Failed to start recruitment.' });
+    }
+  };
 
+  // --- Handle Stop Recruitment ---
+  const stopRecruitment = async (semester) => {
+     if (!club) return;
+     if (!window.confirm(`Are you sure you want to stop recruitment for ${semester}?`)) {
+        return;
+     }
+    setStatusMessage({ type: '', text: '' });
+    try {
+      await axios.put('http://localhost:3001/api/recruitment/stop', {
+        clubId: club._id,
+        semester
+      }, { withCredentials: true });
+
+      setRecruitments(prev => prev.map(r => r.semester === semester ? { ...r, status: 'no' } : r));
+      setStatusMessage({ type: 'info', text: `Recruitment for ${semester} stopped.` });
+    } catch (err) {
+      console.error("Error stopping recruitment:", err);
+      setStatusMessage({ type: 'error', text: err.response?.data?.message || 'Failed to stop recruitment.' });
+    }
+  };
+
+  // --- Determine Current Recruitment Status ---
+  const currentRecruitmentInfo = recruitments.find(r => r.semester === currentSemester);
+  const isCurrentlyRecruiting = currentRecruitmentInfo?.status === 'yes';
+
+  // --- Render Logic ---
+  if (isLoading) {
     return (
-        <div className="recruitment-page-container">
-            {clubInfo && (
-                <header className="recruitment-header">
-                    <h1>{clubInfo.cname} - Recruitment Management</h1>
-                    <p className="club-id">Club ID: {clubInfo.cid}</p>
-                </header>
-            )}
-
-            {error && <div className="error-message"><FaExclamationTriangle /> {error}</div>}
-
-            <section className="status-control-section">
-                <div className={`status-indicator ${isRecruiting ? 'active' : 'inactive'}`}>
-                    <FaInfoCircle />
-                    <span>Recruitment Status: {isRecruiting ? 'Active' : 'Inactive'}</span>
-                </div>
-
-                {isRecruiting ? (
-                    // --- Controls when ACTIVE ---
-                    <div className="recruitment-actions">
-                         {/* Option to add another semester */}
-                         {availableSemestersForStarting.length > 0 && (
-                            <div className="start-recruitment-form add-semester-form">
-                                <select
-                                    value={selectedSemester}
-                                    onChange={(e) => setSelectedSemester(e.target.value)}
-                                    disabled={actionLoading}
-                                >
-                                    <option value="" disabled>Select semester to add...</option>
-                                    {availableSemestersForStarting.map(sem => (
-                                        <option key={sem} value={sem}>{sem}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={handleStartRecruitment}
-                                    disabled={actionLoading || !selectedSemester || !clubId} // Disable if clubId is missing
-                                    className="action-button start-button"
-                                >
-                                    {actionLoading ? <FaSpinner className="spinner-button" /> : <><FaPlay /> Add Recruitment Semester</>}
-                                </button>
-                            </div>
-                        )}
-                         <button
-                            onClick={handleStopRecruitment}
-                            disabled={actionLoading || !clubId} // Disable if clubId is missing
-                            className="action-button stop-button"
-                        >
-                            {actionLoading ? <FaSpinner className="spinner-button" /> : <><FaStop /> Stop All Recruitment</>}
-                        </button>
-                    </div>
-                ) : (
-                    // --- Controls when INACTIVE ---
-                    <div className="recruitment-actions">
-                         {availableSemestersForStarting.length > 0 ? (
-                            <div className="start-recruitment-form">
-                                <select
-                                    value={selectedSemester}
-                                    onChange={(e) => setSelectedSemester(e.target.value)}
-                                    disabled={actionLoading}
-                                >
-                                     <option value="" disabled>Select semester to start...</option>
-                                    {/* Show all available semesters if none are active */}
-                                    {AVAILABLE_SEMESTERS.map(sem => (
-                                        <option key={sem} value={sem}>{sem}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={handleStartRecruitment}
-                                    disabled={actionLoading || !selectedSemester || !clubId} // Disable if clubId is missing
-                                    className="action-button start-button"
-                                >
-                                    {actionLoading ? <FaSpinner className="spinner-button" /> : <><FaPlay /> Start Recruitment</>}
-                                </button>
-                             </div>
-                        ) : (
-                            <p>All available semesters are already active or no semesters defined.</p>
-                        )}
-                    </div>
-                )}
-            </section>
-
-            {/* Only show active semesters if recruiting is ON and there are active semesters */}
-            {isRecruiting && activeSemesters.length > 0 && (
-                <section className="active-semesters-section">
-                    <h2>Active Recruitment Semesters</h2>
-                    <div className="semester-grid">
-                         {/* Map over semesterData, which only includes active semesters */}
-                        {semesterData.map((data) => (
-                            <div key={data.semester} className="semester-card">
-                                <h3>{data.semester}</h3>
-                                <div className="semester-stats">
-                                    <p><FaUsers /> Total Applicants: <span>{data.totalApplicants}</span></p>
-                                    <p><FaHourglassHalf /> Pending: <span>{data.pending}</span></p>
-                                    <p><FaCheckCircle className="accepted-icon"/> Accepted: <span>{data.accepted}</span></p>
-                                    <p><FaTimesCircle className="rejected-icon"/> Rejected: <span>{data.rejected}</span></p>
-                                </div>
-                                <div className="semester-actions">
-                                    <button
-                                        onClick={() => handleEvaluate(data.semester)}
-                                        className="action-button evaluate-button"
-                                         disabled={!clubId} // Disable if clubId is missing
-                                    >
-                                        <FaSearch /> Evaluate Applicants
-                                    </button>
-                                    {/* Optional: Add button here to stop recruitment for *only* this semester */}
-                                     {/* <button className="action-button stop-semester-button">Stop for {data.semester}</button> */}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-            {/* Display info messages correctly */}
-             {!isRecruiting && (activeSemesters.length === 0) && (
-                 <section className="info-section">
-                    <p><FaInfoCircle /> Recruitment is currently turned off. Select a semester and click "Start Recruitment" to begin accepting applications.</p>
-                </section>
-            )}
-             {/* This specific message might not be reachable if isRecruiting is true but activeSemesters is empty after fetch, */}
-             {/* as the fetch should return the current club state. */}
-             {/* Keeping it for logical completeness if a state change could lead here */}
-             {isRecruiting && activeSemesters.length === 0 && !isLoading && (
-                <section className="info-section">
-                    <p><FaInfoCircle /> Recruitment is ON, but no specific semesters are currently active for applications. Use the form above to add a recruitment semester.</p>
-                </section>
-            )}
-        </div>
+      <div className={styles.loadingContainer}>
+        <Loader className={styles.spinner} size={48} />
+        <p>Loading Club Recruitment Data...</p>
+      </div>
     );
-}
+  }
+
+  if (error) {
+    return (
+      <div className={styles.errorContainer}>
+        <AlertTriangle size={40} className={styles.errorIcon} />
+        <h2>Error Loading Data</h2>
+        <p>{error}</p>
+        <button onClick={fetchData} className={styles.retryButton}>Retry</button>
+      </div>
+    );
+  }
+
+  if (!club) {
+     return (
+      <div className={styles.errorContainer}>
+        <AlertTriangle size={40} className={styles.errorIcon} />
+        <h2>Club Information Missing</h2>
+        <p>Could not load club details. Please try logging in again.</p>
+         {/* Optionally add a login button */}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.recruitmentPage}>
+      {/* Page Header */}
+      <header className={styles.pageHeader}>
+        <h1><Megaphone size={28} /> Club Recruitment Management</h1>
+        <div className={styles.clubInfo}>
+          <span><Building size={16} /> {club.cname}</span>
+          <span><BadgeInfo size={16} /> ID: {club.cid}</span>
+        </div>
+      </header>
+
+       {/* Status Message Area */}
+        {statusMessage.text && (
+            <div className={`${styles.statusMessage} ${styles[statusMessage.type]}`}>
+                {statusMessage.type === 'success' && <CheckCircle size={18} />}
+                {statusMessage.type === 'error' && <AlertTriangle size={18} />}
+                {statusMessage.type === 'info' && <Info size={18} />}
+                <span>{statusMessage.text}</span>
+                <button onClick={() => setStatusMessage({ type: '', text: '' })} className={styles.closeMessage}>&times;</button>
+            </div>
+        )}
+
+
+      {/* Current Semester & Status */}
+      <section className={styles.currentStatusSection}>
+        <div className={styles.semesterInfo}>
+           <CalendarDays size={20} />
+           <span>Current Semester: <strong>{currentSemester}</strong></span>
+        </div>
+        <div className={`${styles.recruitmentStatus} ${isCurrentlyRecruiting ? styles.active : styles.inactive}`}>
+          {isCurrentlyRecruiting ? <PlayCircle size={20} /> : <XCircle size={20} />}
+          <span>Status: {isCurrentlyRecruiting ? 'Currently Recruiting' : 'Not Currently Recruiting'}</span>
+        </div>
+      </section>
+
+      {/* Start Recruitment Form (Show if not currently recruiting or no record exists) */}
+      {!isCurrentlyRecruiting && (
+        <section className={styles.startFormSection}>
+          <h3><Send size={20} /> Start New Recruitment for {currentSemester}</h3>
+          <div className={styles.formGrid}>
+            <div className={styles.formGroup}>
+              <label htmlFor="deadline"><CalendarClock size={16} /> Application Deadline</label>
+              <input
+                id="deadline"
+                type="date"
+                value={deadline}
+                onChange={e => setDeadline(e.target.value)}
+                className={styles.formInput}
+              />
+            </div>
+            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}> {/* Span full width */}
+              <label htmlFor="description"><FileText size={16} /> Recruitment Description</label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Provide details about the recruitment process, requirements, positions available, etc."
+                className={styles.formTextarea}
+                rows={4}
+              />
+            </div>
+          </div>
+          <button onClick={startRecruitment} className={`${styles.btn} ${styles.btnPrimary} ${styles.btnIcon}`}>
+            <Send size={16} /> Start Recruitment
+          </button>
+        </section>
+      )}
+
+      {/* Divider */}
+      <hr className={styles.divider} />
+
+      {/* Past Recruitments Section */}
+      <section className={styles.pastRecruitmentsSection}>
+        <h3><CalendarDays size={20} /> Recruitment History</h3>
+        {recruitments.length === 0 ? (
+            <p className={styles.noHistory}>No past recruitment data found for this club.</p>
+        ) : (
+            <div className={styles.recruitmentGrid}>
+            {recruitments.map(rec => (
+                <div key={rec.semester} className={styles.recruitmentCard}>
+                <div className={styles.cardHeader}>
+                    <h4>{rec.semester}</h4>
+                    <span className={`${styles.cardStatus} ${rec.status === 'yes' ? styles.active : styles.inactive}`}>
+                    {rec.status === 'yes' ? <PlayCircle size={14} /> : <XCircle size={14} />}
+                    {rec.status === 'yes' ? 'Active' : 'Stopped'}
+                    </span>
+                </div>
+                <div className={styles.cardBody}>
+                    <p className={styles.applicantCount}>
+                        <Users size={14} /> Pending: <strong>{rec.pending_std?.length || 0}</strong>
+                    </p>
+                    <p className={styles.applicantCount}>
+                        <UserCheck size={14} /> Approved: <strong>{rec.approved_std?.length || 0}</strong>
+                    </p>
+                    <p className={styles.applicantCount}>
+                        <UserX size={14} /> Rejected: <strong>{rec.rejected_std?.length || 0}</strong>
+                    </p>
+                     <p className={styles.deadlineInfo}>
+                        <CalendarClock size={14} /> Deadline: {rec.application_deadline ? new Date(rec.application_deadline).toLocaleDateString() : 'N/A'}
+                    </p>
+                </div>
+                <div className={styles.cardFooter}>
+                    <button
+                    onClick={() => navigate(`/club/recruitments/evaluate/${rec.semester}`)}
+                    className={`${styles.btn} ${styles.btnSecondary} ${styles.btnIcon}`}
+                    title="View and evaluate applicants"
+                    >
+                    <ListChecks size={16} /> Evaluate
+                    </button>
+                    {rec.status === 'yes' && (
+                    <button
+                        onClick={() => stopRecruitment(rec.semester)}
+                        className={`${styles.btn} ${styles.btnDanger} ${styles.btnIcon}`}
+                        title="Stop accepting new applications for this semester"
+                    >
+                        <StopCircle size={16} /> Stop
+                    </button>
+                    )}
+                </div>
+                </div>
+            ))}
+            </div>
+        )}
+      </section>
+    </div>
+  );
+};
 
 export default ClubRecruitments;

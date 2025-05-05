@@ -7,11 +7,14 @@ const MongoStore = require('connect-mongo');
 const connectDB = require('./database.js');
 const studentRoutes = require('./routes/studentRoute.js');
 const clubRoutes = require('./routes/clubRoutes');
-const recruitmentRoutes = require('./routes/recruitmentRoutes');
+
 const clubAuthRoutes = require('./routes/clubAuth');
 const studentAuthRoutes = require('./routes/studentAuth');
+const recruitmentRoutes = require('./routes/recruitmentRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
+const studentEventRoutes = require('./routes/studentEvents');
+
 
 
 connectDB();
@@ -44,13 +47,26 @@ app.use(session({
 // Correct order
 app.use('/api/clubs', clubAuthRoutes); // Login and dashboard
 app.use('/api/clubs', clubRoutes); 
-app.use('/api/students', studentAuthRoutes);    // Other club routes
-app.use('/api/recruitment', recruitmentRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/students', studentAuthRoutes.router);    // Other club routes
+app.use('/api/recruitment', recruitmentRoutes);
+
 app.use('/api/events', eventRoutes);  
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/student/events', studentEventRoutes);
 
-console.log("Routes mounted: /api/students, /api/events");
+
+console.log("Routes mounted:");
+console.log(" - /api/clubs/auth, /api/clubs");
+console.log(" - /api/students/auth, /api/students");
+console.log(" - /api/recruitment");
+console.log(" - /api/events");
+console.log(" - /api/budgets");
+console.log(" - /api/student/events");
+
+app.get('/', (req, res) => {
+  res.send('ClubSync API is running!');
+});
 
 app.listen(3001, () => {
   console.log('🚀 Server running on http://localhost:3001');

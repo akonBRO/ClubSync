@@ -6,11 +6,14 @@ import HomePage from './pages/HomePage';
 import ClubRegister from './pages/ClubRegister';
 import ClubLogin from './pages/ClubLogin';
 import StudentLogin from './students/StudentLogin';
+import StudentClubsPage from './students/StudentClubsPage';
+import MyClubsPage from './students/MyClubsPage'; // Placeholder
+import JoinClubsPage from './students/JoinClubsPage'; // Placeholder
 import ClubSidebar from './pages/ClubSidebar';
 import StudentSidebar from './students/StudentSidebar';
 import ClubDashboard from './pages/ClubDashboard';
 import StudentDashboard from './students/StudentDashboard';
-
+import UpcomingEvents from './students/UpcomingEvents';
 import ClubEvents from './pages/ClubEvents';
 import EventBooking from './pages/EventBooking';
 import ApprovedEvents from './pages/ApprovedEvents';
@@ -21,7 +24,7 @@ import ClubMembers from './pages/ClubMembers';
 import ClubProfile from './pages/ClubProfile';
 import ClubSettings from './pages/ClubSettings';
 import BudgetPage from './pages/BudgetPage';
-import RecruitmentEvaluationPage from './pages/RecruitmentEvaluationPage';
+import RecruitmentEvaluationPage from './pages/EvaluateApplicants';
 import styles from './App.module.css';
 axios.defaults.withCredentials = true;
 
@@ -74,6 +77,8 @@ function ClubEventsRoutes() {
     );
 }
 
+
+
 function StudentLayout() {
     return (
         <div className={styles.dashboardContainer}> {/* Use the same container style */}
@@ -82,6 +87,10 @@ function StudentLayout() {
                 <Routes>
                     <Route path="dashboard" element={<StudentDashboard />} />
                     {/* Add other student-related routes here */}
+                    <Route path="clubs" element={<StudentClubsPage />} />
+                    <Route path="myclubs" element={<MyClubsPage />} />
+                    <Route path="joinclubs" element={<JoinClubsPage />} />
+                    <Route path="upcoming-events" element={<UpcomingEvents />} />
                 </Routes>
             </div>
         </div>

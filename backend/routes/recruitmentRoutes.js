@@ -1,276 +1,271 @@
-// recruitmentroute.js
 const express = require('express');
 const router = express.Router();
-const Club = require('../models/club'); // Assuming path is correct
-const mongoose = require('mongoose');
+const Recruitment = require('../models/recruitment');
+const Club = require('../models/club');
+const Student = require('../models/student');
 
-// 1. Turn On/Off Recruitment and Set/Clear Semesters
-router.post('/set-recruitment/:clubId', async (req, res) => {
-    try {
-        const { clubId } = req.params;
-        // Expect 'semester' only when turning ON, 'recruitmentStatus' is always required
-        const { semester, recruitmentStatus } = req.body;
-
-        if (recruitmentStatus === undefined || typeof recruitmentStatus !== 'string' || !['Yes', 'No'].includes(recruitmentStatus)) {
-            return res.status(400).json({ message: 'Please provide a valid recruitment status ("Yes" or "No").' });
-        }
-
-        let updateData = {};
-
-        if (recruitmentStatus === 'Yes') {
-            // When turning ON, require a semester to add
-            if (!semester || typeof semester !== 'string' || semester.trim() === '') {
-                return res.status(400).json({ message: 'Please provide the specific semester to start recruitment for.' });
-            }
-            updateData = {
-                creq: 'Yes',
-                $addToSet: { semester: semester.trim() } // Add semester only if it doesn't exist
-            };
-        } else { // recruitmentStatus === 'No'
-            // When turning OFF, set status to No and clear the active semesters
-            updateData = {
-                creq: 'No',
-                $set: { semester: [] } // Clear the semester array
-            };
-        }
-
-        const club = await Club.findByIdAndUpdate(
-            clubId,
-            updateData,
-            { new: true, runValidators: true } // new: true returns the updated document
-        );
-
-        if (!club) {
-            return res.status(404).json({ message: 'Club not found.' });
-        }
-
-        // Recalculate semester data after update for the response
-        const semesterData = club.semester.map(sem => {
-            const semesterApplicants = club.req_id.filter(req => req.semester === sem);
-            const pending = semesterApplicants.filter(app => app.status === 'pending').length;
-            const accepted = semesterApplicants.filter(app => app.status === 'accepted').length;
-            const rejected = semesterApplicants.filter(app => app.status === 'rejected').length;
-            return {
-                semester: sem,
-                totalApplicants: semesterApplicants.length,
-                pending: pending,
-                accepted: accepted,
-                rejected: rejected
-            };
-          });
-
-
-        res.status(200).json({
-            message: `Recruitment status set to ${recruitmentStatus}. ${recruitmentStatus === 'Yes' ? `Recruiting for semester: ${semester}` : 'Stopped recruiting for all semesters.'}`,
-            club, // Send back the updated club document
-            semesterData // Send back the recalculated semester data
-        });
-
-    } catch (error) {
-        console.error("Error setting recruitment status:", error);
-        // Handle potential CastError if clubId format is invalid
-        if (error instanceof mongoose.Error.CastError) {
-             return res.status(400).json({ message: 'Invalid Club ID format.' });
-        }
-        res.status(500).json({ message: 'Server error while updating recruitment status.', error: error.message });
-    }
+// Get all recruitments for a club
+router.get('/:clubId', async (req, res) => {
+  try {
+    const recruitments = await Recruitment.find({ clubId: req.params.clubId }).sort({ semester: -1 });
+    res.json(recruitments);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching recruitments' });
+  }
 });
 
-// 2. Student Applies to a Club - (No changes needed based on prompt)
-router.post('/apply/:clubId', async (req, res) => {
-    try {
-        const { clubId } = req.params;
-        const { studentId, semester } = req.body; // Assuming studentId comes from auth/session later
+// Create or update recruitment for a semester
+router.post('/create', async (req, res) => {
+  const { clubId, clubName, semester, application_deadline, description } = req.body;
 
-        if (!studentId || !semester) {
-            return res.status(400).json({ message: 'Student ID and semester are required.' });
-        }
+  try {
+    const existing = await Recruitment.findOne({ clubId, semester });
 
-        if (!mongoose.Types.ObjectId.isValid(clubId)) {
-             return res.status(400).json({ message: 'Invalid Club ID format.' });
-        }
-         // Basic validation for studentId if it's expected to be an ObjectId
-         if (!mongoose.Types.ObjectId.isValid(studentId)) {
-            return res.status(400).json({ message: 'Invalid Student ID format.' });
-       }
-
-
-        const club = await Club.findById(clubId);
-        if (!club) {
-            return res.status(404).json({ message: 'Club not found.' });
-        }
-
-        // Check if recruitment is active for the club overall
-        if (club.creq !== 'Yes') {
-             return res.status(400).json({ message: 'This club is not currently recruiting.' });
-        }
-
-        // Check if the club is recruiting for the *specific* semester
-        if (!club.semester.includes(semester)) {
-            return res.status(400).json({ message: `This club is not recruiting for the '${semester}' semester.` });
-        }
-
-        // Check if the student has already applied for this specific semester
-        const alreadyApplied = club.req_id.some(application =>
-            // Ensure comparison works even if studentId is stored as ObjectId
-             application.studentId.equals(studentId) && application.semester === semester
-        );
-
-        if (alreadyApplied) {
-            return res.status(400).json({ message: 'You have already applied to this club for this semester.' });
-        }
-
-        // Add the student's application
-        club.req_id.push({
-            studentId: studentId,
-            semester: semester,
-            status: 'pending' // Initial status
-            // applicationDate is handled by default in schema
-        });
-
-        await club.save();
-        res.status(201).json({ message: 'Application submitted successfully.', club }); // 201 Created is suitable here
-    } catch (error) {
-        console.error("Error applying to club:", error);
-         if (error instanceof mongoose.Error.CastError) {
-            return res.status(400).json({ message: 'Invalid ID format provided.' });
-       }
-        res.status(500).json({ message: 'Server error during application.', error: error.message });
+    if (existing) {
+      existing.status = 'yes';
+      existing.application_deadline = application_deadline;
+      existing.description = description;
+      await existing.save();
+      return res.json({ message: 'Recruitment updated', recruitment: existing });
     }
+
+    const newRec = new Recruitment({
+      clubId,
+      clubName,
+      semester,
+      application_deadline,
+      description,
+      status: 'yes',
+      pending_std: [],
+      approved_std: [],
+      rejected_std: []
+    });
+
+    await newRec.save();
+    res.json({ message: 'Recruitment started', recruitment: newRec });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to start recruitment' });
+  }
 });
 
-// 3. Get all applicants for a club - (Populate student details as requested)
-router.get('/applicants/:clubId', async (req, res) => {
-    try {
-        const { clubId } = req.params;
-
-         if (!mongoose.Types.ObjectId.isValid(clubId)) {
-            return res.status(400).json({ message: 'Invalid Club ID format.' });
-        }
-
-        // Adjust populate fields based on your Student schema (e.g., 'name email regno')
-        const club = await Club.findById(clubId)
-                               .populate({
-                                   path: 'req_id.studentId',
-                                   select: 'name studentId regno email' // Specify fields you want from Student model
-                                });
-
-        if (!club) {
-            return res.status(404).json({ message: 'Club not found.' });
-        }
-
-        // Optional: Filter applicants by a specific semester if needed via query param
-        const { semester } = req.query;
-        let applicants = club.req_id;
-        if (semester) {
-            applicants = club.req_id.filter(app => app.semester === semester);
-        }
-
-
-        res.status(200).json({ applicants: applicants });
-    } catch (error) {
-        console.error("Error fetching applicants:", error);
-         if (error instanceof mongoose.Error.CastError) {
-            return res.status(400).json({ message: 'Invalid Club ID format.' });
-       }
-        res.status(500).json({ message: 'Server error fetching applicants.', error: error.message });
-    }
+// Stop recruitment
+router.put('/stop', async (req, res) => {
+  const { clubId, semester } = req.body;
+  try {
+    await Recruitment.findOneAndUpdate({ clubId, semester }, { status: 'no' });
+    res.json({ message: 'Recruitment stopped' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to stop recruitment' });
+  }
 });
 
-// 4. Set Application Status (Accept/Reject) - (No changes needed based on prompt)
-router.post('/set-status/:clubId', async (req, res) => {
-    try {
-        const { clubId } = req.params;
-        const { applicationId, status } = req.body; // Use the unique _id of the application subdocument
+// Inside GET /api/recruitment/applicants/:clubId/:semester
+router.get('/applicants/:clubId/:semester', async (req, res) => {
+  const { clubId, semester } = req.params; // clubId here is the ObjectId from the URL
+  try {
+    // Find the specific recruitment document
+    const recruitment = await Recruitment.findOne({ clubId: clubId, semester: semester });
+    if (!recruitment) {
+        return res.status(404).json({ message: "Recruitment not found for this club and semester" });
+    }
 
-        if (!mongoose.Types.ObjectId.isValid(clubId)) {
-            return res.status(400).json({ message: 'Invalid Club ID format.' });
-       }
-       if (!mongoose.Types.ObjectId.isValid(applicationId)) {
-        return res.status(400).json({ message: 'Invalid Application ID format.' });
+    // Get all unique student UIDs from pending, approved, rejected lists
+    const allUids = [...new Set([...recruitment.pending_std, ...recruitment.approved_std, ...recruitment.rejected_std])];
+
+    if (allUids.length === 0) {
+        return res.json({ applicants: [] }); // No applicants found
+    }
+
+    // Fetch student details for all applicants, selecting specific fields
+    const students = await Student.find(
+        { uid: { $in: allUids } }, // Query by UID
+        // Projection: Select specific fields to return
+        'uid uname umail umobile ugender major semester'
+    ).lean(); // Use .lean() for plain JS objects
+
+    // Function to determine the current status of a student in this recruitment
+    const mapStatus = (uid) => {
+      if (recruitment.approved_std.includes(uid)) return 'approved';
+      if (recruitment.rejected_std.includes(uid)) return 'rejected';
+      return 'pending'; // Default to pending
+    };
+
+    // Combine student details with their status
+    const formattedApplicants = students.map(student => ({
+      ...student, // Spread all selected student fields
+      status: mapStatus(student.uid), // Add the current status
+      selectedStatus: mapStatus(student.uid) // Initialize dropdown selection
+    }));
+
+     res.json({ applicants: formattedApplicants });
+
+   } catch (err) {
+     console.error("Error fetching applicants:", err);
+     res.status(500).json({ message: "Server error while fetching applicants" });
    }
-
-        if (!status || !['pending', 'accepted', 'rejected'].includes(status)) {
-            return res.status(400).json({ message: 'A valid status (pending, accepted, rejected) is required.' });
-        }
-
-        // Find the club and the specific application subdocument using its _id
-        const club = await Club.findOneAndUpdate(
-            { "_id": clubId, "req_id._id": applicationId }, // Find the club and the specific application
-            {
-                "$set": { "req_id.$.status": status } // Update the status of the matched application
-            },
-            { new: true, runValidators: true } // Return the updated document
-        );
+ });
 
 
-        if (!club) {
-            // This could mean club not found OR application ID not found within that club
-            return res.status(404).json({ message: 'Club or Application not found.' });
-        }
+// POST /api/recruitment/evaluate
+// Updates applicant status and manages club membership list
+router.post('/evaluate', async (req, res) => {
+const { clubId, semester, uid, action } = req.body; // action is the new status
 
-        res.status(200).json({ message: 'Application status updated successfully.', application: club.req_id.id(applicationId) }); // Return updated application details
+// Input validation
+if (!clubId || !semester || uid === undefined || !action || !['approved', 'rejected', 'pending'].includes(action)) {
+  return res.status(400).json({ message: "Missing or invalid required fields: clubId, semester, uid, action (approved/rejected/pending)" });
+}
 
-    } catch (error) {
-        console.error("Error setting application status:", error);
-        if (error instanceof mongoose.Error.CastError) {
-            return res.status(400).json({ message: 'Invalid ID format provided.' });
-       }
-        res.status(500).json({ message: 'Server error while setting status.', error: error.message });
-    }
+try {
+  // Fetch recruitment, club, and student documents concurrently
+  // Fetch the full Club document now, as we need to modify cmembers
+  const [recruitment, clubDoc, student] = await Promise.all([
+      Recruitment.findOne({ clubId: clubId, semester: semester }),
+      Club.findById(clubId), // Fetch the full club document
+      Student.findOne({ uid: uid })
+  ]);
+
+  // --- Validation ---
+  if (!recruitment) return res.status(404).json({ message: "Recruitment process not found for this club/semester" });
+  if (!student) return res.status(404).json({ message: "Student not found" });
+  if (!clubDoc) return res.status(404).json({ message: "Club not found (for evaluation)"});
+
+  const numericClubId = clubDoc.cid; // The numeric ID of the club (used for student's lists)
+  const studentUid = student.uid; // The numeric UID of the student
+
+  // --- Flags for saving ---
+  let recruitmentNeedsSave = false;
+  let studentNeedsSave = false;
+  let clubNeedsSave = false;
+
+  // --- Update Recruitment Document ---
+  const originalPending = [...recruitment.pending_std];
+  const originalApproved = [...recruitment.approved_std];
+  const originalRejected = [...recruitment.rejected_std];
+
+  // Remove student UID from all status lists first
+  recruitment.pending_std = recruitment.pending_std.filter(id => id !== studentUid);
+  recruitment.approved_std = recruitment.approved_std.filter(id => id !== studentUid);
+  recruitment.rejected_std = recruitment.rejected_std.filter(id => id !== studentUid);
+
+  // Add student UID to the appropriate new status list
+  if (action === 'approved' && !recruitment.approved_std.includes(studentUid)) {
+      recruitment.approved_std.push(studentUid);
+  } else if (action === 'rejected' && !recruitment.rejected_std.includes(studentUid)) {
+      recruitment.rejected_std.push(studentUid);
+  } else if (action === 'pending' && !recruitment.pending_std.includes(studentUid)) {
+      recruitment.pending_std.push(studentUid);
+  }
+
+  // Check if recruitment document actually changed
+  if (
+      JSON.stringify(originalPending) !== JSON.stringify(recruitment.pending_std) ||
+      JSON.stringify(originalApproved) !== JSON.stringify(recruitment.approved_std) ||
+      JSON.stringify(originalRejected) !== JSON.stringify(recruitment.rejected_std)
+  ) {
+      recruitmentNeedsSave = true;
+  }
+
+
+  // --- Update Student Document ---
+  const originalPenClubs = [...student.pen_clubs];
+  const originalClubs = [...student.clubs];
+
+  // Always remove the numeric club ID from the student's pending list first
+  student.pen_clubs = student.pen_clubs.filter(cIdNum => cIdNum !== numericClubId);
+  // Also remove from the main clubs list initially
+  student.clubs = student.clubs.filter(cIdNum => cIdNum !== numericClubId);
+
+  if (action === 'approved') {
+      // Add numeric Club ID to student's main clubs list if not present
+      if (!student.clubs.includes(numericClubId)) {
+          student.clubs.push(numericClubId);
+      }
+  } else if (action === 'pending') {
+      // Add numeric Club ID back to pending list if not already there
+      if (!student.pen_clubs.includes(numericClubId)) {
+          student.pen_clubs.push(numericClubId);
+      }
+  }
+  // If action is 'rejected', the club ID is removed from both pen_clubs and clubs (handled above)
+
+  // Check if student document actually changed
+  if (
+      JSON.stringify(originalPenClubs) !== JSON.stringify(student.pen_clubs) ||
+      JSON.stringify(originalClubs) !== JSON.stringify(student.clubs)
+  ) {
+      studentNeedsSave = true;
+  }
+
+
+  // --- Update Club Document (cmembers) ---
+  const originalMembers = [...clubDoc.cmembers];
+
+  if (action === 'approved') {
+      // Add student UID to club members if not already present
+      if (!clubDoc.cmembers.includes(studentUid)) {
+          clubDoc.cmembers.push(studentUid);
+          clubNeedsSave = true;
+      }
+  } else { // action is 'rejected' or 'pending'
+      // Remove student UID from club members if present
+      const initialLength = clubDoc.cmembers.length;
+      clubDoc.cmembers = clubDoc.cmembers.filter(memberUid => memberUid !== studentUid);
+      if (clubDoc.cmembers.length !== initialLength) {
+          clubNeedsSave = true;
+      }
+  }
+
+  // --- Save Changes Conditionally ---
+  const savePromises = [];
+  if (recruitmentNeedsSave) savePromises.push(recruitment.save());
+  if (studentNeedsSave) savePromises.push(student.save());
+  if (clubNeedsSave) savePromises.push(clubDoc.save());
+
+  if (savePromises.length > 0) {
+      await Promise.all(savePromises);
+  }
+
+  // Respond with success
+  res.json({
+      message: `Student ${uid} status updated to ${action}${clubNeedsSave ? ' and club membership updated.' : '.'}`,
+  });
+
+} catch (err) {
+  console.error("Evaluation error:", err);
+  if (err.name === 'CastError') {
+      return res.status(400).json({ message: "Invalid ID format provided." });
+  }
+  res.status(500).json({ message: "Server error during evaluation" });
+}
 });
 
+// --- GET /recruiting/active (No changes needed here) ---
+router.get('/recruiting/active', async (req, res) => {
+  try {
+    const activeRecruitments = await Recruitment.find({ status: 'yes' })
+      .populate('clubId', 'cid cname') // Populate necessary club details
+      .lean();
 
-// 5. Get Club Details with Recruitment Info - (Modified slightly to ensure semesterData calculation)
-router.get('/details/:clubId', async (req, res) => {
-    try {
-        const { clubId } = req.params;
+    const recruitingClubs = activeRecruitments.map(rec => ({
+      _id: rec._id, // Recruitment document ID
+      clubId: rec.clubId._id, // Club document ObjectId
+      cid: rec.clubId.cid, // Club numeric ID
+      clubName: rec.clubId.cname,
+      semester: rec.semester,
+      application_deadline: rec.application_deadline,
+      description: rec.description,
+      status: rec.status,
+      createdAt: rec.createdAt,
+      updatedAt: rec.updatedAt
+    }));
 
-        if (!mongoose.Types.ObjectId.isValid(clubId)) {
-            return res.status(400).json({ message: 'Invalid Club ID format.' });
-        }
-
-        const club = await Club.findById(clubId);
-
-        if (!club) {
-            return res.status(404).json({ message: 'Club not found.' });
-        }
-
-        // Calculate applicant counts for each *currently active* recruitment semester
-        const semesterData = club.semester.map(sem => {
-            const semesterApplicants = club.req_id.filter(req => req.semester === sem);
-            const pending = semesterApplicants.filter(app => app.status === 'pending').length;
-            const accepted = semesterApplicants.filter(app => app.status === 'accepted').length;
-            const rejected = semesterApplicants.filter(app => app.status === 'rejected').length;
-            return {
-                semester: sem,
-                totalApplicants: semesterApplicants.length,
-                pending: pending,
-                accepted: accepted,
-                rejected: rejected
-            };
-          });
-
-
-        res.status(200).json({
-            // Send only necessary club info if preferred, or the whole object
-            club: {
-                _id: club._id,
-                cname: club.cname,
-                cid: club.cid,
-                creq: club.creq,
-                // Add other fields needed on this page
-            },
-            activeSemesters: club.semester, // Send the array of currently active semesters
-            semesterData: semesterData,   // Send the calculated stats
-        });
-    } catch (error) {
-        console.error("Error fetching club details:", error);
-        if (error instanceof mongoose.Error.CastError) {
-            return res.status(400).json({ message: 'Invalid Club ID format.' });
-       }
-        res.status(500).json({ message: 'Server error fetching club details', error: error.message });
-    }
+    res.json(recruitingClubs);
+  } catch (err) {
+    console.error('Error fetching recruiting clubs:', err);
+    res.status(500).json({ message: 'Error fetching recruiting clubs' });
+  }
 });
 
 

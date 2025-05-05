@@ -14,8 +14,8 @@ const StudentSidebar = () => {
 
     const menuItems = [
         { path: '/student/dashboard', label: 'Dashboard', icon: <FaHome className={styles.sidebarNavItemIcon} /> },
-        { path: '/student/courses', label: 'Courses', icon: <FaBook className={styles.sidebarNavItemIcon} /> },
-        { path: '/student/events', label: 'Events', icon: <FaCalendarAlt className={styles.sidebarNavItemIcon} /> },
+        { path: '/student/clubs', label: 'Clubs', icon: <FaBook className={styles.sidebarNavItemIcon} /> },
+        { path: '/student/upcoming-events', label: 'Events', icon: <FaCalendarAlt className={styles.sidebarNavItemIcon} /> },
         { path: '/student/profile', label: 'Profile', icon: <FaUser className={styles.sidebarNavItemIcon} /> },
         { path: '/student/settings', label: 'Settings', icon: <FaCog className={styles.sidebarNavItemIcon} /> },
     ];

@@ -1,0 +1,102 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 8px;
+  }
+  
+  .pending-count {
+    font-weight: bold;
+  }
+  
+  .pending-count span {
+    color: #2c7be5;
+  }
+  
+  .search input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 300px;
+  }
+  
+  .clubs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  .club-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .club-card h3 {
+    margin-top: 0;
+    color: #2c7be5;
+  }
+  
+  .club-card p {
+    margin: 8px 0;
+    color: #555;
+  }
+  
+  .actions {
+    margin-top: 15px;
+  }
+  
+  .actions button {
+    background: #2c7be5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .actions button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .actions .status {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  
+  .actions .status.approved {
+    background: #28a745;
+    color: white;
+  }
+  
+  .actions .status.rejected {
+    background: #dc3545;
+    color: white;
+  }
+  
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: #666;
+  }
+  
+  .error {
+    color: #dc3545;
+    padding: 10px;
+    background: #f8d7da;
+    border-radius: 4px;
+  }
