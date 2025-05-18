@@ -51,5 +51,18 @@ router.get('/all', async (req, res) => {
   }
 });
 
+// Get club by cid (e.g., after login or from session)
+router.get('/:cid', async (req, res) => {
+  try {
+    const club = await Club.findOne({ cid: Number(req.params.cid) });
+
+    if (!club) return res.status(404).json({ message: 'Club not found' });
+    res.status(200).json(club);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching club data' });
+  }
+});
+
+
 
 module.exports = router;

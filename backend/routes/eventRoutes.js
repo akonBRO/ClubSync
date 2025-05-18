@@ -212,6 +212,26 @@ router.post('/:eventId/registered-students', authClub, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching registered students', error: error.message });
     }
 });
+// GET /api/events/:id - Get event by MongoDB _id
+router.get('/:id', async (req, res) => {
+  try {
+      const { id } = req.params;
 
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ message: 'Invalid event ID format.' });
+      }
+
+      const event = await Event.findById(id);
+      if (!event) {
+          return res.status(404).json({ message: 'Event not found with the provided ID.' });
+      }
+
+      res.status(200).json({ event });
+
+  } catch (error) {
+      console.error(`Error fetching event with id=${req.params.id}:`, error);
+      res.status(500).json({ message: 'Server error fetching event', error: error.message });
+  }
+});
 
 module.exports = router;

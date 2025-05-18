@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import {Route, BrowserRouter as Router, Switch, Link} from 'react-router-dom';
 import styles from './StudentDashboard.module.css';
 import { FaCalendarAlt, FaUsers, FaUserCircle, FaBell, FaBullhorn } from 'react-icons/fa';
 
@@ -12,35 +13,140 @@ const StudentDashboard = () => {
     const [upcomingEventsList, setUpcomingEventsList] = useState([]);
     const [enrolledClubsList, setEnrolledClubsList] = useState([]);
     const [latestAnnouncementsList, setLatestAnnouncementsList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const storedStudentName = localStorage.getItem('studentName');
         const storedStudentId = localStorage.getItem('studentId');
 
         if (storedStudentName && storedStudentId) {
-            setStudentName(storedStudentName ? storedStudentName : 'Student');
+            setStudentName(storedStudentName || 'Student');
             setStudentId(storedStudentId);
             fetchStudentDashboardData(storedStudentId);
         }
     }, []);
 
     const fetchStudentDashboardData = async (studentId) => {
-        // Dummy data - replace with your API calls
-        setUpcomingEventsCount(3);
-        setEnrolledClubsCount(2);
-        setNewAnnouncementsCount(2);
-        setProfileSnapshot({ major: 'Computer Science' });
-        setUpcomingEventsList([
-            { id: 1, title: 'Club Fair', date: 'May 6, 2025', location: 'Main Hall' },
-            { id: 2, title: 'Student Union Meeting', date: 'May 9, 2025', time: '3:00 PM' },
-            { id: 3, title: 'Workshop: Time Management', date: 'May 11, 2025', time: '10:00 AM' },
-        ]);
-        setEnrolledClubsList(['Photography Club', 'Music Society']);
-        setLatestAnnouncementsList([
-            { id: 1, title: 'Call for Volunteers - Campus Cleanup', date: 'May 5, 2025' },
-            { id: 2, title: 'New Club Added: Robotics Club', date: 'May 4, 2025' },
-        ]);
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Fetch student profile data
+            const profileResponse = await fetch(`http://localhost:3001/api/students/${studentId}`, {
+                credentials: 'include'
+            });
+            
+            if (!profileResponse.ok) {
+                throw new Error('Failed to fetch profile data');
+            }
+            
+            const profileData = await profileResponse.json();
+            setProfileSnapshot({
+                uid: profileData.uid,
+                major: profileData.major || 'Not specified',
+                semester: profileData.semester || 'Not specified'
+            });
+
+            // Fetch enrolled clubs
+            const clubsResponse = await fetch(`http://localhost:3001/api/students/${studentId}/myclubs`, {
+                credentials: 'include'
+            });
+            
+            if (!clubsResponse.ok) {
+                throw new Error('Failed to fetch club data');
+            }
+            
+            const clubsData = await clubsResponse.json();
+            setEnrolledClubsList(clubsData.map(club => club.cname));
+            setEnrolledClubsCount(clubsData.length);
+
+            // Fetch upcoming events (approved events where student is registered or club events)
+            const eventsResponse = await fetch('http://localhost:3001/api/events/status/Approved', {
+                credentials: 'include'
+            });
+            
+            if (!eventsResponse.ok) {
+                throw new Error('Failed to fetch events data');
+            }
+            
+            const allEvents = await eventsResponse.json();
+            
+            // Filter events where student is registered or from their clubs
+            const studentEvents = allEvents.filter(event => 
+                event.reg_std.includes(profileData.uid) || 
+                clubsData.some(club => club.cname === event.club_name)
+            );
+            
+            // Format events for display
+            const formattedEvents = studentEvents.map(event => ({
+                id: event._id,
+                title: event.event_name,
+                date: new Date(event.event_date).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                }),
+                time: event.time_slots[0], // Show first time slot
+                location: event.room_number
+            }));
+            
+            setUpcomingEventsList(formattedEvents);
+            setUpcomingEventsCount(formattedEvents.length);
+
+            // For announcements, we'll use club announcements (simplified)
+            // In a real app, you might have a separate announcements model
+            const announcements = allEvents
+                .filter(event => clubsData.some(club => club.cname === event.club_name))
+                .slice(0, 3) // Get latest 3
+                .map(event => ({
+                    id: event._id,
+                    title: `New Event: ${event.event_name}`,
+                    date: new Date(event.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })
+                }));
+            
+            setLatestAnnouncementsList(announcements);
+            setNewAnnouncementsCount(announcements.length);
+
+        } catch (err) {
+            console.error('Error fetching dashboard data:', err);
+            setError(err.message);
+            // Fallback to dummy data if API fails (remove in production)
+            setUpcomingEventsCount(0);
+            setEnrolledClubsCount(0);
+            setNewAnnouncementsCount(0);
+            setProfileSnapshot({ major: 'Error loading data' });
+            setUpcomingEventsList([]);
+            setEnrolledClubsList([]);
+            setLatestAnnouncementsList([]);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <main className={styles.mainContent}>
+                <div className={styles.dashboardContainer}>
+                    <p>Loading dashboard...</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (error) {
+        return (
+            <main className={styles.mainContent}>
+                <div className={styles.dashboardContainer}>
+                    <p className={styles.error}>Error: {error}</p>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className={styles.mainContent}>
@@ -85,13 +191,14 @@ const StudentDashboard = () => {
                                         <li key={event.id} className={styles.widgetListItem}>
                                             <span className={styles.listItemTitle}>{event.title}</span>
                                             <span className={styles.listItemMeta}>{event.date} {event.time && `(${event.time})`}</span>
+                                            {event.location && <span className={styles.listItemMeta}>Location: {event.location}</span>}
                                         </li>
                                     ))}
                                 </ul>
                             ) : (
                                 <p className={styles.noData}>No upcoming events.</p>
                             )}
-                            <button className={styles.viewAllButton}>View All Events</button>
+                           <Link to='/student/upcoming-events'> <button className={styles.viewAllButton}>View All Events</button></Link>
                         </div>
 
                         <div className={styles.widget}>
@@ -105,7 +212,7 @@ const StudentDashboard = () => {
                             ) : (
                                 <p className={styles.noData}>Not enrolled in any clubs yet.</p>
                             )}
-                            <button className={styles.viewAllButton}>Explore Clubs</button>
+                            <Link to='/student/clubs'><button className={styles.viewAllButton}>Explore Clubs</button></Link>
                         </div>
                     </section>
 
@@ -132,9 +239,10 @@ const StudentDashboard = () => {
                                 <FaUserCircle className={styles.profileIcon} />
                                 <h3 className={styles.profileName}>{studentName}</h3>
                             </div>
-                            <p className={styles.profileDetail}>Student ID: {studentId}</p>
+                            <p className={styles.profileDetail}>Student ID: {profileSnapshot.uid}</p>
                             <p className={styles.profileDetail}>Major: {profileSnapshot.major || 'N/A'}</p>
-                            <button className={styles.viewProfileButton}>View Profile</button>
+                            <p className={styles.profileDetail}>Semester: {profileSnapshot.semester || 'N/A'}</p>
+                            <Link to='/student/profile'><button className={styles.viewProfileButton}>View Profile</button></Link>
                         </div>
                     </section>
                 </div>

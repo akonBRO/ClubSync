@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-// Import desired icons (example using Font Awesome)
 import { FaPlus, FaTrash, FaSave, FaInfoCircle, FaCheckCircle, FaExclamationTriangle, FaHourglassHalf, FaLock, FaTasks } from 'react-icons/fa';
-import './BudgetPage.css'; // We will heavily modify this file
+import './BudgetPage.css'; 
 
 const BudgetPage = () => {
   const { eventId } = useParams();
@@ -14,7 +13,7 @@ const BudgetPage = () => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- useEffect hook (NO CHANGES) ---
+
   useEffect(() => {
     const fetchEventAndBudget = async () => {
       setIsLoading(true);
@@ -62,9 +61,9 @@ const BudgetPage = () => {
       setIsLoading(false);
       setError("Event ID is missing.");
     }
-  }, [eventId, isLoading]); // Added isLoading to dependency array for the error handling logic inside catch
+  }, [eventId, isLoading]); 
 
-  // --- Handlers (NO CHANGES) ---
+  // --- Handlers ---
   const handleAddItem = () => {
     setItems([
       ...items,
@@ -128,7 +127,7 @@ const BudgetPage = () => {
     }
   };
 
-  // --- Calculations (NO CHANGES) ---
+  // --- Calculations  ---
   const totalBudget = items.reduce((sum, item) => sum + (Number(item.total_price) || 0), 0);
 
   // --- Render Logic ---
@@ -285,7 +284,7 @@ const BudgetPage = () => {
               </table>
             </div>
 
-            {/* Form Actions & Summary */}
+            
             <div className="budget-form-footer">
                 <button
                     type="button"
@@ -351,7 +350,7 @@ const BudgetPage = () => {
             )}
           </div>
         )}
-      </div> {/* End budget-content */}
+      </div> 
     </div> // End budget-container
   );
 };

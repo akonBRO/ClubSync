@@ -4,7 +4,7 @@ const router = express.Router();
 const Budget = require('../models/budgetModel');
 const Event = require('../models/eventModel');
 
-router.get('/by-booking/:bookingId', async (req, res) => { // Renamed param for clarity
+router.get('/by-booking/:bookingId', async (req, res) => {
   try {
     const { bookingId } = req.params; // Get the booking_id (UUID string) from URL
 
@@ -29,7 +29,7 @@ router.get('/by-booking/:bookingId', async (req, res) => { // Renamed param for 
 });
 // Create or update budget for an event
 
-router.post('/:eventId', async (req, res) => { // eventId is Event's MongoDB _id
+router.post('/:eventId', async (req, res) => { 
   try {
     const { eventId } = req.params;
     const { items } = req.body; // These are the NEW/EDITED items from the user
@@ -119,9 +119,6 @@ router.post('/:eventId', async (req, res) => { // eventId is Event's MongoDB _id
       await event.save();
       console.log('New budget created successfully.');
 
-      // Optionally update event status if needed
-      // event.status = 'Budget';
-      // await event.save();
 
       // Send back the NEW budget object with 201 status
       res.status(201).json({ message: 'Budget created successfully.', budget });

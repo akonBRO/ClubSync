@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-// Import Lucide icons
 import {
   Building,
-  BadgeInfo,
+  BadgeInfo, // Or Briefcase
   CalendarDays,
   Megaphone,
   PlayCircle,
@@ -21,8 +20,12 @@ import {
   UserX,
   CheckCircle,
   Info,
+  LogIn,
+  RotateCw,
+  Archive, // For history title
+  Edit3, // For description icon
+  Target // For current semester/status
 } from 'lucide-react';
-// Import the CSS module
 import styles from './ClubRecruitments.module.css';
 
 const ClubRecruitments = () => {
@@ -33,30 +36,23 @@ const ClubRecruitments = () => {
   const [club, setClub] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' }); // For feedback
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
-  // --- Define current semester (Consider making this dynamic) ---
-  // You might fetch this from an API or calculate it based on the current date
-  const currentSemester = 'Spring 2025';
+  const currentSemester = 'Spring 2025'; // Consider making this dynamic
 
-  // --- Fetch Club and Recruitment Data ---
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError('');
-    setStatusMessage({ type: '', text: '' }); // Clear message on refetch
+    setStatusMessage({ type: '', text: '' });
     try {
-      // Fetch club details first (assuming this endpoint sets credentials/session correctly)
       const clubRes = await axios.get('http://localhost:3001/api/clubs/dashboard', { withCredentials: true });
       if (clubRes.data && clubRes.data.clubDetails) {
         const fetchedClub = clubRes.data.clubDetails;
         setClub(fetchedClub);
-
-        // Then fetch recruitments for this club
         const recruitmentRes = await axios.get(`http://localhost:3001/api/recruitment/${fetchedClub._id}`, { withCredentials: true });
-        // Sort recruitments, maybe newest first? (Optional)
-        setRecruitments(recruitmentRes.data.sort((a, b) => b.semester.localeCompare(a.semester))); // Example sort
+        setRecruitments(recruitmentRes.data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)));
       } else {
-        throw new Error("Club details not found.");
+        throw new Error("Club details not found. You might not be logged in or authorized.");
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -66,19 +62,18 @@ const ClubRecruitments = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []); // Empty dependency array means this useCallback memoizes the function itself
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Run fetchData on mount and if fetchData changes (which it shouldn't here)
+  }, [fetchData]);
 
-  // --- Handle Start Recruitment ---
   const startRecruitment = async () => {
     if (!club || !deadline || !description.trim()) {
       setStatusMessage({ type: 'error', text: 'Please set a deadline and provide a description.' });
       return;
     }
-    setStatusMessage({ type: '', text: '' }); // Clear previous message
+    setStatusMessage({ type: '', text: '' });
     try {
       const res = await axios.post('http://localhost:3001/api/recruitment/create', {
         clubId: club._id,
@@ -89,23 +84,20 @@ const ClubRecruitments = () => {
       }, { withCredentials: true });
 
       setStatusMessage({ type: 'success', text: res.data.message || 'Recruitment started successfully!' });
-      // Add the new recruitment to the top and refetch/update state cleanly
       setRecruitments(prev => [res.data.recruitment, ...prev.filter(r => r.semester !== currentSemester)]);
-      // Clear form
-      // setDeadline(''); // Keep deadline maybe?
-      // setDescription('');
+      setDescription('');
+      // setDeadline(''); // Keep or clear deadline based on preference
     } catch (err) {
       console.error("Error starting recruitment:", err);
       setStatusMessage({ type: 'error', text: err.response?.data?.message || 'Failed to start recruitment.' });
     }
   };
 
-  // --- Handle Stop Recruitment ---
   const stopRecruitment = async (semester) => {
-     if (!club) return;
-     if (!window.confirm(`Are you sure you want to stop recruitment for ${semester}?`)) {
-        return;
-     }
+    if (!club) return;
+    if (!window.confirm(`Are you sure you want to stop recruitment for ${semester}? This action cannot be undone.`)) {
+      return;
+    }
     setStatusMessage({ type: '', text: '' });
     try {
       await axios.put('http://localhost:3001/api/recruitment/stop', {
@@ -114,173 +106,247 @@ const ClubRecruitments = () => {
       }, { withCredentials: true });
 
       setRecruitments(prev => prev.map(r => r.semester === semester ? { ...r, status: 'no' } : r));
-      setStatusMessage({ type: 'info', text: `Recruitment for ${semester} stopped.` });
+      setStatusMessage({ type: 'info', text: `Recruitment for ${semester} has been successfully stopped.` });
     } catch (err) {
       console.error("Error stopping recruitment:", err);
       setStatusMessage({ type: 'error', text: err.response?.data?.message || 'Failed to stop recruitment.' });
     }
   };
 
-  // --- Determine Current Recruitment Status ---
   const currentRecruitmentInfo = recruitments.find(r => r.semester === currentSemester);
   const isCurrentlyRecruiting = currentRecruitmentInfo?.status === 'yes';
 
-  // --- Render Logic ---
+  const totalPending = recruitments.reduce((sum, r) => sum + (r.pending_std?.length || 0), 0);
+  const totalApproved = recruitments.reduce((sum, r) => sum + (r.approved_std?.length || 0), 0);
+  const totalRejected = recruitments.reduce((sum, r) => sum + (r.rejected_std?.length || 0), 0);
+
+
   if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
-        <Loader className={styles.spinner} size={48} />
-        <p>Loading Club Recruitment Data...</p>
+        <Loader className={styles.spinner} size={50} />
+        <p>Loading Recruitment Dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error && !club) {
+    return (
+      <div className={styles.errorPageContainer}> {/* Use a generic container for error pages */}
+        <AlertTriangle size={48} className={styles.errorIconColor} />
+        <h2 className={styles.errorTitle}>Access Denied or Data Missing</h2>
+        <p className={styles.errorMessage}>{error}</p>
+        <p className={styles.errorMessage}>Please ensure you are logged in with appropriate club credentials.</p>
+        <div className={styles.errorActions}>
+            <button onClick={() => navigate('/login')} className={`${styles.primaryButton} ${styles.errorButton}`}>
+                <LogIn size={18} className={styles.buttonIcon} /> Go to Login
+            </button>
+            <button onClick={fetchData} className={`${styles.secondaryButton} ${styles.errorButton}`}>
+                <RotateCw size={18} className={styles.buttonIcon} /> Retry
+            </button>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.errorContainer}>
-        <AlertTriangle size={40} className={styles.errorIcon} />
-        <h2>Error Loading Data</h2>
-        <p>{error}</p>
-        <button onClick={fetchData} className={styles.retryButton}>Retry</button>
+      <div className={styles.errorPageContainer}>
+        <AlertTriangle size={48} className={styles.errorIconColor} />
+        <h2 className={styles.errorTitle}>An Error Occurred</h2>
+        <p className={styles.errorMessage}>{error}</p>
+         <button onClick={fetchData} className={`${styles.primaryButton} ${styles.errorButton}`}>
+            <RotateCw size={18} className={styles.buttonIcon} /> Try Again
+        </button>
       </div>
     );
   }
 
   if (!club) {
-     return (
-      <div className={styles.errorContainer}>
-        <AlertTriangle size={40} className={styles.errorIcon} />
-        <h2>Club Information Missing</h2>
-        <p>Could not load club details. Please try logging in again.</p>
-         {/* Optionally add a login button */}
+      return (
+        <div className={styles.errorPageContainer}>
+            <AlertTriangle size={48} className={styles.errorIconColor} />
+            <h2 className={styles.errorTitle}>Club Information Unavailable</h2>
+            <p className={styles.errorMessage}>Could not load club details. Please try logging in again or retrying.</p>
+            <div className={styles.errorActions}>
+                <button onClick={() => navigate('/login')} className={`${styles.primaryButton} ${styles.errorButton}`}>
+                    <LogIn size={18} className={styles.buttonIcon} /> Login Again
+                </button>
+                <button onClick={fetchData} className={`${styles.secondaryButton} ${styles.errorButton}`}>
+                    <RotateCw size={18} className={styles.buttonIcon} /> Retry
+                </button>
+            </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.recruitmentPage}>
-      {/* Page Header */}
-      <header className={styles.pageHeader}>
-        <h1><Megaphone size={28} /> Club Recruitment Management</h1>
-        <div className={styles.clubInfo}>
-          <span><Building size={16} /> {club.cname}</span>
-          <span><BadgeInfo size={16} /> ID: {club.cid}</span>
-        </div>
-      </header>
-
-       {/* Status Message Area */}
-        {statusMessage.text && (
-            <div className={`${styles.statusMessage} ${styles[statusMessage.type]}`}>
-                {statusMessage.type === 'success' && <CheckCircle size={18} />}
-                {statusMessage.type === 'error' && <AlertTriangle size={18} />}
-                {statusMessage.type === 'info' && <Info size={18} />}
-                <span>{statusMessage.text}</span>
-                <button onClick={() => setStatusMessage({ type: '', text: '' })} className={styles.closeMessage}>&times;</button>
-            </div>
-        )}
-
-
-      {/* Current Semester & Status */}
-      <section className={styles.currentStatusSection}>
-        <div className={styles.semesterInfo}>
-           <CalendarDays size={20} />
-           <span>Current Semester: <strong>{currentSemester}</strong></span>
-        </div>
-        <div className={`${styles.recruitmentStatus} ${isCurrentlyRecruiting ? styles.active : styles.inactive}`}>
-          {isCurrentlyRecruiting ? <PlayCircle size={20} /> : <XCircle size={20} />}
-          <span>Status: {isCurrentlyRecruiting ? 'Currently Recruiting' : 'Not Currently Recruiting'}</span>
-        </div>
-      </section>
-
-      {/* Start Recruitment Form (Show if not currently recruiting or no record exists) */}
-      {!isCurrentlyRecruiting && (
-        <section className={styles.startFormSection}>
-          <h3><Send size={20} /> Start New Recruitment for {currentSemester}</h3>
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label htmlFor="deadline"><CalendarClock size={16} /> Application Deadline</label>
-              <input
-                id="deadline"
-                type="date"
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-                className={styles.formInput}
-              />
-            </div>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}> {/* Span full width */}
-              <label htmlFor="description"><FileText size={16} /> Recruitment Description</label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Provide details about the recruitment process, requirements, positions available, etc."
-                className={styles.formTextarea}
-                rows={4}
-              />
-            </div>
+    <div className={styles.pageContainer}>
+      {/* Hero Section */}
+      <div className={styles.heroSection}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>Recruitment Dashboard</h1>
+          <p className={styles.heroSubtitle}>Manage your club's recruitment drives, track applicants, and streamline your selection process.</p>
+          <div className={styles.clubDetails}>
+            <span><Building size={20} /> {club.cname}</span>
+            <span><BadgeInfo size={20} /> Club ID: {club.cid}</span>
           </div>
-          <button onClick={startRecruitment} className={`${styles.btn} ${styles.btnPrimary} ${styles.btnIcon}`}>
-            <Send size={16} /> Start Recruitment
-          </button>
-        </section>
+        </div>
+        <div className={styles.heroImage}>
+          <Megaphone size={80} className={styles.heroIcon} />
+        </div>
+      </div>
+
+      {/* Status Message Area - Placed after Hero, before other content */}
+      {statusMessage.text && (
+        <div className={`${styles.statusMessageOuter} ${styles[statusMessage.type]}`}>
+            <div className={styles.statusIconWrapper}>
+                {statusMessage.type === 'success' && <CheckCircle />}
+                {statusMessage.type === 'error' && <AlertTriangle />}
+                {statusMessage.type === 'info' && <Info />}
+            </div>
+            <span>{statusMessage.text}</span>
+            <button onClick={() => setStatusMessage({ type: '', text: '' })} className={styles.closeStatusMessage}>&times;</button>
+        </div>
       )}
 
-      {/* Divider */}
-      <hr className={styles.divider} />
+      {/* Current Recruitment Status & Quick Stats */}
+      <div className={styles.analyticsSection}>
+        <h2 className={styles.sectionTitle}><Target size={24} className={styles.titleIcon} />Overview</h2>
+        <div className={styles.analyticsGrid}>
+          <div className={`${styles.analyticsCard} ${styles.infoCard}`}>
+            <CalendarDays size={30} className={styles.analyticsIcon} />
+            <span className={styles.analyticsLabel}>Current Semester</span>
+            <span className={styles.analyticsCount}>{currentSemester}</span>
+          </div>
+          <div className={`${styles.analyticsCard} ${isCurrentlyRecruiting ? styles.activeRecruitmentCard : styles.inactiveRecruitmentCard}`}>
+            {isCurrentlyRecruiting ? <PlayCircle size={30} className={styles.analyticsIcon} /> : <XCircle size={30} className={styles.analyticsIcon} />}
+            <span className={styles.analyticsLabel}>Recruitment Status</span>
+            <span className={styles.analyticsCountMedium}>{isCurrentlyRecruiting ? 'OPEN' : 'CLOSED'}</span>
+          </div>
+           <div className={`${styles.analyticsCard} ${styles.pendingCard}`}>
+                <Users size={30} className={styles.analyticsIcon} />
+                <span className={styles.analyticsLabel}>Total Pending Applicants</span>
+                <span className={styles.analyticsCount}>{totalPending}</span>
+            </div>
+            <div className={`${styles.analyticsCard} ${styles.approvedCard}`}>
+                <UserCheck size={30} className={styles.analyticsIcon} />
+                <span className={styles.analyticsLabel}>Total Approved</span>
+                <span className={styles.analyticsCount}>{totalApproved}</span>
+            </div>
+        </div>
+      </div>
+
+
+      {/* Action Section: Start or Manage Recruitment */}
+      <div className={styles.contentSection}>
+        {!isCurrentlyRecruiting && (
+          <>
+            <h2 className={styles.sectionTitle}><Send size={24} className={styles.titleIcon} /> Launch New Recruitment Drive</h2>
+            <div className={styles.formContainer}>
+              <div className={styles.formGroup}>
+                <label htmlFor="deadline"><CalendarClock size={18} /> Application Deadline</label>
+                <input
+                  id="deadline" type="date" value={deadline}
+                  onChange={e => setDeadline(e.target.value)}
+                  className={styles.formInput}
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="description"><Edit3 size={18} /> Recruitment Description & Details</label>
+                <textarea
+                  id="description" value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="Provide details about the recruitment process, requirements, positions available, key dates, etc."
+                  className={styles.formTextarea}
+                  rows={5}
+                />
+              </div>
+              <button onClick={startRecruitment} className={`${styles.primaryButton} ${styles.submitButton}`}>
+                <Send size={18} className={styles.buttonIcon} /> Start Recruitment
+              </button>
+            </div>
+          </>
+        )}
+
+        {isCurrentlyRecruiting && currentRecruitmentInfo && (
+          <>
+            <h2 className={styles.sectionTitle}><ListChecks size={24} className={styles.titleIcon} /> Manage Active Recruitment: {currentRecruitmentInfo.semester}</h2>
+            <div className={styles.currentRecruitmentInfoBox}>
+                <p><strong><FileText size={16} /> Description:</strong> {currentRecruitmentInfo.description || "No description provided."}</p>
+                <p><strong><CalendarClock size={16} /> Deadline:</strong> {currentRecruitmentInfo.application_deadline ? new Date(currentRecruitmentInfo.application_deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+                </p>
+            </div>
+            <div className={styles.actionButtonsContainer}>
+                <button
+                    onClick={() => navigate(`/club/recruitments/evaluate/${currentRecruitmentInfo.semester}`)}
+                    className={`${styles.primaryButton}`}
+                    title="View and evaluate applicants"
+                >
+                    <ListChecks size={18} className={styles.buttonIcon} /> Evaluate Applicants
+                </button>
+                <button
+                    onClick={() => stopRecruitment(currentRecruitmentInfo.semester)}
+                    className={`${styles.dangerButton}`}
+                    title="Stop accepting new applications for this semester"
+                >
+                    <StopCircle size={18} className={styles.buttonIcon} /> Stop Recruitment
+                </button>
+            </div>
+          </>
+        )}
+      </div>
+
 
       {/* Past Recruitments Section */}
-      <section className={styles.pastRecruitmentsSection}>
-        <h3><CalendarDays size={20} /> Recruitment History</h3>
-        {recruitments.length === 0 ? (
-            <p className={styles.noHistory}>No past recruitment data found for this club.</p>
+      <div className={styles.contentSection}>
+        <h2 className={styles.sectionTitle}><Archive size={24} className={styles.titleIcon} /> Recruitment Archives</h2>
+        {recruitments.filter(r => r.semester !== currentSemester || (r.semester === currentSemester && r.status === 'no')).length === 0 && !isCurrentlyRecruiting ? (
+          <div className={styles.noDataMessage}>
+            <Info size={24} className={styles.infoIcon} />
+            <p>No past recruitment drives found. Completed recruitments will appear here.</p>
+          </div>
         ) : (
-            <div className={styles.recruitmentGrid}>
-            {recruitments.map(rec => (
-                <div key={rec.semester} className={styles.recruitmentCard}>
+          <div className={styles.recruitmentGrid}>
+            {recruitments
+                .filter(rec => rec.status === 'no' || rec.semester !== currentSemester) // Filter for completed or past
+                .map(rec => (
+              <div key={rec._id || rec.semester} className={styles.recruitmentCard}>
                 <div className={styles.cardHeader}>
-                    <h4>{rec.semester}</h4>
-                    <span className={`${styles.cardStatus} ${rec.status === 'yes' ? styles.active : styles.inactive}`}>
-                    {rec.status === 'yes' ? <PlayCircle size={14} /> : <XCircle size={14} />}
-                    {rec.status === 'yes' ? 'Active' : 'Stopped'}
-                    </span>
+                  <h3 className={styles.cardTitle}>{rec.semester}</h3>
+                  <span className={`${styles.cardStatus} ${rec.status === 'yes' ? styles.statusActive : styles.statusConcluded}`}>
+                    {rec.status === 'yes' ? <PlayCircle size={14} /> : <CheckCircle size={14} />}
+                    {rec.status === 'yes' ? 'Was Active' : 'Concluded'}
+                  </span>
                 </div>
                 <div className={styles.cardBody}>
-                    <p className={styles.applicantCount}>
-                        <Users size={14} /> Pending: <strong>{rec.pending_std?.length || 0}</strong>
-                    </p>
-                    <p className={styles.applicantCount}>
-                        <UserCheck size={14} /> Approved: <strong>{rec.approved_std?.length || 0}</strong>
-                    </p>
-                    <p className={styles.applicantCount}>
-                        <UserX size={14} /> Rejected: <strong>{rec.rejected_std?.length || 0}</strong>
-                    </p>
-                     <p className={styles.deadlineInfo}>
-                        <CalendarClock size={14} /> Deadline: {rec.application_deadline ? new Date(rec.application_deadline).toLocaleDateString() : 'N/A'}
-                    </p>
+                  <p className={styles.cardDescription}>
+                    {rec.description?.substring(0, 120) || "No specific description was provided for this drive."}
+                    {rec.description?.length > 120 && "..."}
+                  </p>
+                  <div className={styles.applicantStats}>
+                    <div className={styles.statItem}><Users size={16} /> Pending: <strong>{rec.pending_std?.length || 0}</strong></div>
+                    <div className={styles.statItem}><UserCheck size={16} /> Approved: <strong>{rec.approved_std?.length || 0}</strong></div>
+                    <div className={styles.statItem}><UserX size={16} /> Rejected: <strong>{rec.rejected_std?.length || 0}</strong></div>
+                  </div>
+                  <p className={styles.cardDeadline}>
+                    <CalendarClock size={14} /> Deadline was: {rec.application_deadline ? new Date(rec.application_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                  </p>
                 </div>
                 <div className={styles.cardFooter}>
-                    <button
+                  <button
                     onClick={() => navigate(`/club/recruitments/evaluate/${rec.semester}`)}
-                    className={`${styles.btn} ${styles.btnSecondary} ${styles.btnIcon}`}
-                    title="View and evaluate applicants"
-                    >
-                    <ListChecks size={16} /> Evaluate
-                    </button>
-                    {rec.status === 'yes' && (
-                    <button
-                        onClick={() => stopRecruitment(rec.semester)}
-                        className={`${styles.btn} ${styles.btnDanger} ${styles.btnIcon}`}
-                        title="Stop accepting new applications for this semester"
-                    >
-                        <StopCircle size={16} /> Stop
-                    </button>
-                    )}
+                    className={`${styles.secondaryButton} ${styles.smallButton}`}
+                  >
+                    <ListChecks size={16} className={styles.buttonIcon} /> Review Applicants
+                  </button>
                 </div>
-                </div>
+              </div>
             ))}
-            </div>
+          </div>
         )}
-      </section>
+      </div>
     </div>
   );
 };

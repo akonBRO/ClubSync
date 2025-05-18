@@ -7,13 +7,13 @@ const recruitmentSchema = new mongoose.Schema({
   status: { type: String, enum: ['yes', 'no'], default: 'no' },
   application_deadline: Date,
   description: String,
-  pending_std: [Number],   // Student IDs
+  pending_std: [Number],   
   approved_std: [Number],
   rejected_std: [Number],
 }, {
   timestamps: true
 });
 
-recruitmentSchema.index({ clubId: 1, semester: 1 }, { unique: true }); // Prevent duplicate
+recruitmentSchema.index({ clubId: 1, semester: 1 }, { unique: true }); 
 
 module.exports = mongoose.model('Recruitment', recruitmentSchema);

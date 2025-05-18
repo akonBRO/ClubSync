@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Users, FileText, Trash2, Eye, Search, ListFilter, Loader, AlertTriangle, User, Mail, X } from 'lucide-react';
+import { Calendar,MessageSquare, Clock, MapPin, Users, FileText, Trash2, Eye, Search, ListFilter, Loader, AlertTriangle, User, Mail, X } from 'lucide-react';
 import { debounce } from 'lodash';
 import './ApprovedEvents.css';
 
@@ -204,6 +204,10 @@ return (
                                     <div className="event-detail event-description">
                                         <FileText size={16} />
                                         <p>{event.event_details || 'No description available.'}</p>
+                                    </div>
+                                    <div className="event-detail event-description">
+                                        <MessageSquare size={16} />
+                                        <p>{event.comments || 'No Comments available.'}</p>
                                     </div>
                             </div>
                             <div className="event-card-actions">

@@ -1,7 +1,10 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { NavLink, useNavigate } from 'react-router-dom';
 import styles from './ClubSidebar.module.css';
-import { FaHome, FaCalendarAlt, FaUserPlus, FaUsers, FaUser, FaCog, FaSyncAlt, FaSignOutAlt } from 'react-icons/fa'; // Import FaSignOutAlt
+import {
+    FaHome, FaCalendarAlt, FaUserPlus, FaUsers, FaUser, FaCog,
+    FaSignOutAlt, FaQuestionCircle, FaShieldAlt // Added FaQuestionCircle for support, FaShieldAlt for logo
+} from 'react-icons/fa';
 
 const ClubSidebar = () => {
     const navigate = useNavigate();
@@ -18,9 +21,10 @@ const ClubSidebar = () => {
 
             if (response.ok) {
                 console.log('Logout successful, redirecting to login.');
-                navigate('/login-club');
+                navigate('/login-club'); // Or your designated club login route
             } else {
                 const data = await response.json();
+                // Consider a more user-friendly notification system than alert
                 alert(data?.message || 'Logout failed.');
             }
         } catch (err) {
@@ -30,46 +34,68 @@ const ClubSidebar = () => {
     };
 
     const menuItems = [
-        { path: '/club/overview', label: 'Overview', icon: <FaHome className={styles.sidebarNavItemIcon} /> },
-        { path: '/club/events', label: 'Events', icon: <FaCalendarAlt className={styles.sidebarNavItemIcon} /> },
-        { path: '/club/recruitments', label: 'Recruitments', icon: <FaUserPlus className={styles.sidebarNavItemIcon} /> },
-        { path: '/club/members', label: 'Members', icon: <FaUsers className={styles.sidebarNavItemIcon} /> },
-        { path: '/club/profile', label: 'Profile', icon: <FaUser className={styles.sidebarNavItemIcon} /> },
-        { path: '/club/settings', label: 'Settings', icon: <FaCog className={styles.sidebarNavItemIcon} /> },
+        { path: '/club/overview', label: 'Overview', icon: <FaHome /> },
+        { path: '/club/events', label: 'Events', icon: <FaCalendarAlt /> },
+        { path: '/club/recruitments', label: 'Recruitments', icon: <FaUserPlus /> },
+        { path: '/club/members', label: 'Members', icon: <FaUsers /> },
+    ];
+
+    const accountMenuItems = [
+        { path: '/club/profile', label: 'My Profile', icon: <FaUser /> },
+        { path: '/club/settings', label: 'Settings', icon: <FaCog /> },
     ];
 
     return (
         <aside className={styles.sidebar}>
-            <div className={styles.sidebarLogo}>
-                <FaSyncAlt className={styles.sidebarLogoIcon} />
+            <div className={styles.sidebarHeader}>
+                <FaShieldAlt className={styles.sidebarLogoIcon} /> {/* Changed Icon */}
                 <span className={styles.sidebarLogoText}>ClubSync</span>
             </div>
-            <div className={styles.sidebarNav}>
-                <div className={styles.adminTools}>Club Menu</div>
-                <nav>
-                    {menuItems.map(item => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            className={({ isActive }) =>
-                                `${styles.sidebarNavItem} ${isActive ? styles.sidebarNavItemActive : ''}`
-                            }
-                        >
-                            {item.icon}
-                            {item.label}
-                        </NavLink>
-                    ))}
-                </nav>
+
+            <nav className={styles.sidebarNav}>
+                <h3 className={styles.navSectionTitle}>Main Menu</h3>
+                {menuItems.map(item => (
+                    <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                            `${styles.sidebarNavItem} ${isActive ? styles.sidebarNavItemActive : ''}`
+                        }
+                    >
+                        <span className={styles.navItemIcon}>{item.icon}</span>
+                        <span className={styles.navItemLabel}>{item.label}</span>
+                    </NavLink>
+                ))}
+
+                <h3 className={styles.navSectionTitle}>Account</h3>
+                 {accountMenuItems.map(item => (
+                    <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                            `${styles.sidebarNavItem} ${isActive ? styles.sidebarNavItemActive : ''}`
+                        }
+                    >
+                        <span className={styles.navItemIcon}>{item.icon}</span>
+                        <span className={styles.navItemLabel}>{item.label}</span>
+                    </NavLink>
+                ))}
+            </nav>
+
+            <div className={styles.sidebarFooter}>
+                <div className={styles.sidebarSupportCard}>
+                    <FaQuestionCircle className={styles.supportIcon} />
+                    <p className={styles.supportText}>Need help with your club dashboard?</p>
+                    <button className={styles.supportButton} onClick={() => navigate('/club/support')}> {/* Example navigation */}
+                        Contact Support
+                    </button>
+                </div>
+
+                <button onClick={handleLogout} className={styles.logoutButton}>
+                    <FaSignOutAlt className={styles.logoutIcon} />
+                    Logout
+                </button>
             </div>
-            
-            <div className={styles.sidebarSupport}>
-                <p className={styles.sidebarSupportText}>Have any problems with managing your dashboard? Contact our support.</p>
-                <button className={styles.sidebarSupportButton}>Contact Us</button>
-            </div>
-            <button onClick={handleLogout} className={styles.logoutButtonSidebar}>
-                <FaSignOutAlt className={styles.logoutButtonSidebarIcon} />
-                Logout
-            </button>
         </aside>
     );
 };

@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Student = require('../models/student.js'); // Ensure path is correct
 const Recruitment = require('../models/recruitment.js');
+const Club = require('../models/club.js')
 console.log("✅ studentAuth.js loaded");
 
 // --- AUTHENTICATION MIDDLEWARE ---
@@ -99,7 +100,93 @@ router.post("/logout", (req, res) => {
     }
 });
 
+router.get("/:studentId", authStudent, async (req, res) => {
+  const { studentId } = req.params;
 
+  // Security Check: Ensure the requested ID matches the logged-in student's ID
+  if (req.student._id !== studentId) {
+      console.warn(`Auth Check: Student ${req.student.uid} attempted to access profile of student ${studentId}`);
+      return res.status(403).json({ message: "Unauthorized access" });
+  }
+
+  try {
+      // Use findById as we have the _id from the URL parameter
+      const student = await Student.findById(studentId).select('-upassword'); // Exclude password
+
+      if (!student) {
+          console.log(`Profile fetch failed: Student ID ${studentId} not found.`);
+          return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Return the student data (excluding password)
+      res.status(200).json(student);
+
+  } catch (err) {
+      console.error("Error fetching student profile:", err);
+      // Mongoose cast errors (invalid ID format) will land here
+      if (err.name === 'CastError') {
+           return res.status(400).json({ message: "Invalid student ID format" });
+      }
+      res.status(500).json({ message: "Server error while fetching profile" });
+  }
+});
+
+router.put("/:studentId/update", authStudent, async (req, res) => {
+  const { studentId } = req.params;
+  const updateData = req.body; // Data from the frontend
+
+  // Security Check: Ensure the logged-in student can only update their own profile
+  // req.student._id is a Mongoose ObjectId, studentId from params is a string.
+  // Convert req.student._id to string for comparison.
+  if (req.student._id.toString() !== studentId) {
+      console.warn(`Auth Check: Student ${req.student.uid} attempted to update profile of student ${studentId} (Unauthorized)`);
+      return res.status(403).json({ message: "Unauthorized to update this profile." });
+  }
+
+  // Optional: Filter allowed fields on the backend as a safety measure,
+  // even though frontend is already excluding some.
+  const allowedFields = ['dob', 'umail', 'umobile', 'ugender', 'major', 'semester'];
+  const filteredUpdateData = Object.keys(updateData)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj, key) => {
+          obj[key] = updateData[key];
+          return obj;
+      }, {});
+
+  // If you have date fields like 'dob', you might need to ensure they are
+  // correctly parsed if sent as strings, or rely on Mongoose schema casting.
+
+  try {
+      // Find the student by ID and update
+      // { new: true } option returns the updated document
+      // { runValidators: true } ensures schema validators are run on updates
+      const updatedStudent = await Student.findByIdAndUpdate(
+          studentId,
+          filteredUpdateData, // Use the filtered data
+          { new: true, runValidators: true }
+      ).select('-upassword'); // Exclude password from the returned document
+
+      if (!updatedStudent) {
+          // This case should ideally not be reached if the authorization check passes
+          return res.status(404).json({ message: "Student not found." });
+      }
+
+      console.log(`Profile updated successfully for UID: ${updatedStudent.uid}`);
+      res.status(200).json(updatedStudent); // Send back the updated student data
+
+  } catch (err) {
+      console.error("Error updating student profile:", err);
+      // Handle specific Mongoose validation errors if needed
+      if (err.name === 'ValidationError') {
+           const messages = Object.values(err.errors).map(val => val.message);
+           return res.status(400).json({ message: messages.join(', ') });
+      }
+       if (err.name === 'CastError') {
+           return res.status(400).json({ message: "Invalid ID format or data format." });
+      }
+      res.status(500).json({ message: "Server error while updating profile." });
+  }
+});
 // --- GET CLUBS FOR A STUDENT ---
 router.get("/:studentId/clubs", async (req, res) => {
     // ... (your existing clubs logic remains here) ...
@@ -176,6 +263,92 @@ if (student && !student.pen_clubs.includes(recruitment.cid)) {
       res.status(500).json({ message: 'Error getting pending count' });
     }
   });
+
+// --- GET STUDENT'S CLUBS WITH DETAILS ---
+// --- GET STUDENT'S CLUBS WITH DETAILS ---
+// --- GET STUDENT'S CLUBS WITH DETAILS ---
+router.get("/:studentId/myclubs", authStudent, async (req, res) => {
+    const { studentId } = req.params;
+    
+    // Authorization check
+    if (req.student._id !== studentId) {
+      console.log(`Auth failed: ${req.student._id} vs ${studentId}`);
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+  
+    try {
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+  
+      // Get all clubs where cid is in student's clubs array
+      const clubs = await Club.find({ cid: { $in: student.clubs } });
+      
+      
+      res.status(200).json(clubs);
+    } catch (err) {
+      console.error("Error fetching student's clubs:", err);
+      res.status(500).json({ 
+        message: "Server error while fetching clubs",
+        error: err.message 
+      });
+    }
+  });
+  
+
+  // --- SEARCH CLUBS (FOR MYCLUBS PAGE) ---
+router.get("/:studentId/myclubs/search", authStudent, async (req, res) => {
+    const { studentId } = req.params;
+    const { query } = req.query;
+  
+    // Authorization check
+    if (req.student._id !== studentId) {
+      return res.status(403).json({ message: "Unauthorized access" });
+    }
+  
+    try {
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+  
+      // Create search conditions
+      const searchConditions = {
+        cid: { $in: student.clubs } // Only search in student's clubs
+      };
+  
+      // Add search query if provided
+      if (query) {
+        const isNumericQuery = !isNaN(query);
+        
+        searchConditions.$or = [
+          { cname: { $regex: query, $options: 'i' } },
+          { cshortname: { $regex: query, $options: 'i' } }
+        ];
+  
+        if (isNumericQuery) {
+          searchConditions.$or.push({ cid: Number(query) });
+        }
+      }
+  
+      const clubs = await Club.find(searchConditions);
+      res.status(200).json(clubs);
+    } catch (err) {
+      console.error("Error searching clubs:", err);
+      res.status(500).json({ message: "Server error while searching clubs" });
+    }
+  });
+// In your student routes
+router.get('/count', async (req, res) => {
+  try {
+      const count = await Student.countDocuments();
+      res.json({ count });
+  } catch (err) {
+      console.error('Error counting students:', err);
+      res.status(500).json({ message: 'Error counting students' });
+  }
+});
 
 module.exports = {
     router: router,       // Export the router under the 'router' key
